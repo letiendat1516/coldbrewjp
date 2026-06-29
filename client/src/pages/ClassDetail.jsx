@@ -3,26 +3,37 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { classes, ranking } from "../api";
 import { esc, randColor, timeAgo, showToast } from "../utils";
+import EMOJI_DATA from "../emojiData";
 
 const API = "/api";
+const EMOJI_CATEGORIES = Object.keys(EMOJI_DATA);
 
-const QUICK_EMOJIS = [
+const DEFAULT_EMOJIS = [
   { emoji: "🌟", point: 5, label: "Xuất sắc" },
+  { emoji: "🎯", point: 4, label: "Chính xác" },
   { emoji: "⭐", point: 3, label: "Tốt" },
-  { emoji: "👍", point: 1, label: "Được" },
+  { emoji: "🔥", point: 3, label: "Đỉnh" },
   { emoji: "💪", point: 2, label: "Cố gắng" },
   { emoji: "👏", point: 2, label: "Hay" },
-  { emoji: "🎯", point: 4, label: "Chính xác" },
-  { emoji: "🔥", point: 3, label: "Đỉnh" },
-  { emoji: "❤️", point: 1, label: "Tốt" },
+  { emoji: "👍", point: 1, label: "Được" },
   { emoji: "👎", point: -1, label: "Chưa tốt" },
   { emoji: "⚠️", point: -2, label: "Nhắc nhở" },
-  { emoji: "😴", point: -1, label: "Buồn ngủ" },
   { emoji: "📝", point: -2, label: "Thiếu bài" },
   { emoji: "⏰", point: -1, label: "Đi muộn" },
   { emoji: "🚫", point: -3, label: "Vi phạm" },
-  { emoji: "💤", point: -1, label: "Lơ là" },
 ];
+
+function loadEmojis() {
+  try {
+    const d = localStorage.getItem("customEmojis");
+    return d ? JSON.parse(d) : DEFAULT_EMOJIS;
+  } catch (e) {
+    return DEFAULT_EMOJIS;
+  }
+}
+function saveEmojis(list) {
+  localStorage.setItem("customEmojis", JSON.stringify(list));
+}
 
 export default function ClassDetail() {
   const { id } = useParams();
@@ -40,6 +51,14 @@ export default function ClassDetail() {
   const [importResult, setImportResult] = useState(null);
   const [customPoint, setCustomPoint] = useState("");
   const [giving, setGiving] = useState(false);
+  const [quickEmojis, setQuickEmojis] = useState(loadEmojis);
+  const [editing, setEditing] = useState(false);
+  const [editIdx, setEditIdx] = useState(-1);
+  const [editEmoji, setEditEmoji] = useState("");
+  const [editLabel, setEditLabel] = useState("");
+  const [editPoint, setEditPoint] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiCat, setEmojiCat] = useState(EMOJI_CATEGORIES[0]);
   const isTeacher = user?.role === "TEACHER" || user?.role === "ADMIN";
 
   useEffect(() => {
@@ -144,6 +163,50 @@ export default function ClassDetail() {
       showToast("Lỗi kết nối", "error");
     }
     setGiving(false);
+  };
+
+  // Edit emojis
+  const openEdit = (idx) => {
+    if (idx === -1) {
+      setEditEmoji("⭐");
+      setEditLabel("");
+      setEditPoint("1");
+    } else {
+      const e = quickEmojis[idx];
+      setEditEmoji(e.emoji);
+      setEditLabel(e.label);
+      setEditPoint(String(e.point));
+    }
+    setEditIdx(idx);
+    setShowEmojiPicker(false);
+  };
+  const saveEdit = () => {
+    const p = parseInt(editPoint) || 1;
+    const item = {
+      emoji: editEmoji || "⭐",
+      point: p,
+      label: editLabel || (p > 0 ? "Thưởng" : "Phạt"),
+    };
+    let list;
+    if (editIdx === -1) list = [...quickEmojis, item];
+    else {
+      list = [...quickEmojis];
+      list[editIdx] = item;
+    }
+    setQuickEmojis(list);
+    saveEmojis(list);
+    setEditIdx(-99);
+  };
+  const deleteEdit = () => {
+    const list = quickEmojis.filter((_, i) => i !== editIdx);
+    setQuickEmojis(list);
+    saveEmojis(list);
+    setEditIdx(-99);
+  };
+  const resetEmojis = () => {
+    setQuickEmojis(DEFAULT_EMOJIS);
+    saveEmojis(DEFAULT_EMOJIS);
+    setEditing(false);
   };
 
   const handleImport = async (e) => {
@@ -425,14 +488,30 @@ export default function ClassDetail() {
             >
               <div
                 style={{
-                  fontSize: 14,
-                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   marginBottom: 16,
-                  color: "#666",
                 }}
               >
-                Chọn emoji để thưởng/phạt {esc(sel.fullName)}:
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#666" }}>
+                  Chọn emoji cho {esc(sel.fullName)}:
+                </div>
+                <button
+                  onClick={() => setEditing(!editing)}
+                  style={{
+                    fontSize: 12,
+                    color: "#999",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  {editing ? "Xong" : "✏️ Sửa"}
+                </button>
               </div>
+
               <div
                 style={{
                   display: "flex",
@@ -441,21 +520,24 @@ export default function ClassDetail() {
                   marginBottom: 20,
                 }}
               >
-                {QUICK_EMOJIS.map((e) => (
+                {quickEmojis.map((e, i) => (
                   <button
-                    key={e.emoji}
-                    onClick={() => giveEmoji(e.emoji, e.point)}
+                    key={i}
+                    onClick={() =>
+                      editing ? openEdit(i) : giveEmoji(e.emoji, e.point)
+                    }
                     disabled={giving}
                     style={{
                       padding: "12px 16px",
                       borderRadius: 12,
                       border: `2px solid ${e.point > 0 ? "rgba(69,227,198,0.3)" : "rgba(245,87,108,0.3)"}`,
-                      background: "#fff",
+                      background: editing ? "#fafafa" : "#fff",
                       cursor: "pointer",
                       textAlign: "center",
                       minWidth: 80,
                       transition: "all .15s",
                       fontFamily: "Inter,sans-serif",
+                      position: "relative",
                     }}
                     onMouseEnter={(t) => {
                       t.target.style.transform = "translateY(-2px)";
@@ -495,9 +577,240 @@ export default function ClassDetail() {
                       {e.point > 0 ? "+" : ""}
                       {e.point}
                     </span>
+                    {editing && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          fontSize: 10,
+                          color: "#999",
+                        }}
+                      >
+                        ✏️
+                      </span>
+                    )}
                   </button>
                 ))}
+                {editing && (
+                  <button
+                    onClick={() => openEdit(-1)}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 12,
+                      border: "2px dashed #ccc",
+                      background: "none",
+                      cursor: "pointer",
+                      textAlign: "center",
+                      minWidth: 80,
+                      fontSize: 32,
+                      color: "#ccc",
+                      fontFamily: "Inter,sans-serif",
+                    }}
+                  >
+                    +
+                  </button>
+                )}
               </div>
+
+              {editing && (
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <button
+                    onClick={resetEmojis}
+                    style={{
+                      fontSize: 11,
+                      color: "#f5576c",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ↺ Về mặc định
+                  </button>
+                </div>
+              )}
+
+              {/* Edit modal inline */}
+              {editIdx !== -99 && (
+                <div
+                  style={{
+                    background: "#fafafa",
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 16,
+                    border: "1px solid #e8e8e8",
+                  }}
+                >
+                  <div
+                    style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}
+                  >
+                    {editIdx === -1 ? "Thêm emoji mới" : "Sửa emoji"}
+                  </div>
+                  <div
+                    style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{ fontSize: 11, color: "#999", marginBottom: 4 }}
+                      >
+                        Emoji
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <input
+                          className="form-input"
+                          value={editEmoji}
+                          onChange={(e) => setEditEmoji(e.target.value)}
+                          style={{
+                            width: 60,
+                            textAlign: "center",
+                            fontSize: 20,
+                          }}
+                        />
+                        <button
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          style={{
+                            fontSize: 20,
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          📋
+                        </button>
+                      </div>
+                      {showEmojiPicker && (
+                        <div style={{ marginTop: 4 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 2,
+                              overflowX: "auto",
+                              marginBottom: 4,
+                            }}
+                          >
+                            {EMOJI_CATEGORIES.map((c) => {
+                              const icon = c.split(" ")[0];
+                              return (
+                                <button
+                                  key={c}
+                                  onClick={() => setEmojiCat(c)}
+                                  style={{
+                                    padding: "2px 5px",
+                                    fontSize: 14,
+                                    border: "none",
+                                    background:
+                                      emojiCat === c
+                                        ? "rgba(69,227,198,0.2)"
+                                        : "none",
+                                    borderRadius: 4,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {icon}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(10,1fr)",
+                              gap: 1,
+                              maxHeight: 100,
+                              overflowY: "auto",
+                              background: "#fff",
+                              borderRadius: 6,
+                              padding: 4,
+                            }}
+                          >
+                            {(EMOJI_DATA[emojiCat] || []).map((e) => (
+                              <button
+                                key={e}
+                                onClick={() => {
+                                  setEditEmoji(e);
+                                }}
+                                style={{
+                                  fontSize: 18,
+                                  padding: 2,
+                                  border:
+                                    editEmoji === e
+                                      ? "2px solid #45e3c6"
+                                      : "2px solid transparent",
+                                  background:
+                                    editEmoji === e
+                                      ? "rgba(69,227,198,0.15)"
+                                      : "none",
+                                  cursor: "pointer",
+                                  borderRadius: 4,
+                                }}
+                              >
+                                {e}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{ fontSize: 11, color: "#999", marginBottom: 4 }}
+                      >
+                        Nhãn
+                      </div>
+                      <input
+                        className="form-input"
+                        value={editLabel}
+                        onChange={(e) => setEditLabel(e.target.value)}
+                        placeholder="VD: Tốt"
+                      />
+                    </div>
+                    <div style={{ width: 80 }}>
+                      <div
+                        style={{ fontSize: 11, color: "#999", marginBottom: 4 }}
+                      >
+                        Điểm
+                      </div>
+                      <input
+                        className="form-input"
+                        type="number"
+                        value={editPoint}
+                        onChange={(e) => setEditPoint(e.target.value)}
+                        style={{ textAlign: "center" }}
+                      />
+                    </div>
+                    <button
+                      onClick={saveEdit}
+                      className="btn btn-primary"
+                      style={{ padding: "10px 16px", fontSize: 13 }}
+                    >
+                      Lưu
+                    </button>
+                    {editIdx >= 0 && (
+                      <button
+                        onClick={deleteEdit}
+                        style={{
+                          padding: "10px 16px",
+                          fontSize: 13,
+                          background: "none",
+                          border: "1px solid #f5576c",
+                          color: "#f5576c",
+                          borderRadius: 8,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div
                   style={{ flex: 1, height: 1, background: "#e8e8e8" }}
