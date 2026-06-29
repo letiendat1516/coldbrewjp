@@ -811,47 +811,6 @@ export default function ClassDetail() {
                 </div>
               )}
 
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div
-                  style={{ flex: 1, height: 1, background: "#e8e8e8" }}
-                ></div>
-                <span style={{ fontSize: 12, color: "#999" }}>
-                  HOẶC NHẬP ĐIỂM
-                </span>
-                <div
-                  style={{ flex: 1, height: 1, background: "#e8e8e8" }}
-                ></div>
-              </div>
-              <form
-                onSubmit={giveCustom}
-                style={{ display: "flex", gap: 8, marginTop: 12 }}
-              >
-                <input
-                  className="form-input"
-                  type="number"
-                  value={customPoint}
-                  onChange={(e) => setCustomPoint(e.target.value)}
-                  placeholder="Nhập điểm (+/-)"
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    fontSize: 16,
-                    fontWeight: 700,
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={giving}
-                  style={{
-                    padding: "12px 24px",
-                    fontSize: 15,
-                    fontWeight: 700,
-                  }}
-                >
-                  OK
-                </button>
-              </form>
             </div>
           )}
         </div>
