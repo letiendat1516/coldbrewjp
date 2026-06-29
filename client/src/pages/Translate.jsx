@@ -98,6 +98,7 @@ export default function Translate() {
 
   const handleFile = (e) => {
     const file = e.target.files[0];
+      setTimeout(() => { if (ocrFile) document.querySelector('#ocrForm')?.requestSubmit(); }, 100);
     if (file) {
       setOcrFile(file);
       setOcrPreview(URL.createObjectURL(file));
@@ -480,7 +481,7 @@ export default function Translate() {
       {/* OCR */}
       {tab === "ocr" && (
         <div>
-          <form onSubmit={doOCR}>
+          <form id="ocrForm" onSubmit={doOCR}>
             <div style={{ marginBottom: 16 }}>
               <label
                 style={{
