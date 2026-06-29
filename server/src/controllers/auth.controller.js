@@ -123,3 +123,22 @@ exports.getMe = async (req, res, next) => {
     next(error);
   }
 };
+
+// Proxy for Mazii API
+exports.maziiProxy = async (req, res, next) => {
+  try {
+    const { keyword } = req.body;
+    if (!keyword) return res.status(400).json({ success: false, message: 'Keyword required' });
+    const r = await fetch('https://mazii.net/api/search/word', {
+      method: 'POST', headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer a1dff8abeb4b03cc4ff96378ef8e01eb',
+        'User-Agent': 'Mozilla/5.0',
+        'Referer': 'https://mazii.net/',
+        'Origin': 'https://mazii.net'
+      },
+      body: JSON.stringify({ keyword, limit: 15 })
+    });
+    const data = await r.json();
+    res.json({ success: true, data });
+  } catch (e) { next(e); }

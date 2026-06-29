@@ -1,106 +1,153 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-
-const API_BASE = '/dictionary';
+import { useState } from "react";
 
 export default function Translate() {
-  const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'dictionary';
-  const [tab, setTab] = useState(initialTab);
+  const [keyword, setKeyword] = useState("");
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Dictionary search
-  const [keyword, setKeyword] = useState('');
-  const [dictResult, setDictResult] = useState(null);
-
-  // Translate
-  const [transText, setTransText] = useState('');
-  const [transResult, setTransResult] = useState('');
-
-  // Tokenize
-  const [tokenText, setTokenText] = useState('');
-  const [tokenResult, setTokenResult] = useState(null);
-
-  const searchDict = async (e) => {
+  const search = async (e) => {
     e.preventDefault();
     if (!keyword.trim()) return;
-    setLoading(true); setDictResult(null);
+    setLoading(true);
+    setResult(null);
     try {
-      const r = await fetch(API_BASE + '/search-mazii', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: keyword.trim(), limit: 20 }),
+      const r = await fetch("/api/mazii/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: keyword.trim() }),
       });
       const d = await r.json();
-      setDictResult(d.data || d);
-    } catch (e) { setDictResult({ error: 'Không kết nối được dịch vụ dịch' }); }
+      setResult(d.data?.data || d.data || d);
+    } catch (e) {
+      setResult({ error: "Lỗi kết nối" });
+    }
     setLoading(false);
   };
 
-  const doTranslate = async (e) => {
-    e.preventDefault();
-    if (!transText.trim()) return;
-    setLoading(true); setTransResult('');
-    try {
-      const r = await fetch(API_BASE + '/translate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: transText.trim(), sourceLang: 'ja', targetLang: 'vi' }),
-      });
-      const d = await r.json();
-      setTransResult(d.data?.translatedText || d.translatedText || JSON.stringify(d));
-    } catch (e) { setTransResult('Lỗi kết nối'); }
-    setLoading(false);
-  };
-
-  const doTokenize = async (e) => {
-    e.preventDefault();
-    if (!tokenText.trim()) return;
-    setLoading(true); setTokenResult(null);
-    try {
-      const r = await fetch(API_BASE + '/tokenize', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: tokenText.trim() }),
-      });
-      const d = await r.json();
-      setTokenResult(d.data || d);
-    } catch (e) { setTokenResult({ error: 'Lỗi kết nối' }); }
-    setLoading(false);
-  };
+  const results =
+    result?.suggestWords ||
+    result?.results ||
+    result?.data ||
+    (Array.isArray(result) ? result : []);
 
   return (
     <div className="container" style={{ paddingTop: 24 }}>
-      <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>🔤 Công cụ dịch tiếng Nhật</h2>
+      <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>
+        📖 Tra từ điển Nhật - Việt
+      </h2>
+      <p style={{ color: "#999", fontSize: 14, marginBottom: 24 }}>
+        Dữ liệu từ Mazii — nhập từ tiếng Nhật hoặc tiếng Việt
+      </p>
 
-      <div className="tabs" style={{ marginBottom: 24 }}>
-        <button className={`tab ${tab === 'dictionary' ? 'active' : ''}`} onClick={() => setTab('dictionary')}>📖 Tra từ điển</button>
-        <button className={`tab ${tab === 'translate' ? 'active' : ''}`} onClick={() => setTab('translate')}>🌐 Dịch văn bản</button>
-        <button className={`tab ${tab === 'tokenize' ? 'active' : ''}`} onClick={() => setTab('tokenize')}>✂️ Tách từ</button>
-      </div>
+      <form
+        onSubmit={search}
+        style={{ display: "flex", gap: 8, marginBottom: 24 }}
+      >
+        <input
+          className="form-input"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="Nhập từ cần tra..."
+          style={{ flex: 1, fontSize: 16 }}
+          autoFocus
+        />
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={loading}
+          style={{ padding: "12px 28px", fontSize: 15 }}
+        >
+          Tra
+        </button>
+      </form>
 
-      {/* Dictionary Search */}
-      {tab === 'dictionary' && (
+      {loading && <div className="spinner" />}
+
+      {result && (
         <div>
-          <form onSubmit={searchDict} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            <input className="form-input" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="Nhập từ cần tra (日本語 / tiếng Việt)" style={{ flex: 1, fontSize: 16 }} />
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '12px 24px', fontSize: 15 }}>Tra</button>
-          </form>
-          {loading && <div className="spinner" />}
-          {dictResult && (
-            <div>
-              {dictResult.error ? <div className="alert alert-error">{dictResult.error}</div> : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {(Array.isArray(dictResult) ? dictResult : dictResult.results || []).slice(0, 20).map((item, i) => (
-                    <div key={i} style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e8e8e8' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
-                        <span style={{ fontSize: 20, fontWeight: 700 }}>{item.word || item.vocabulary}</span>
-                        {item.reading && <span style={{ fontSize: 14, color: '#999' }}>{item.reading}</span>}
-                      </div>
-                      <div style={{ fontSize: 14, color: '#666' }}>
-                        {(item.means || item.meanings || []).map((m, j) => (
-                          <span key={j} style={{ marginRight: 12 }}>{typeof m === 'string' ? m : m.meaning}</span>
+          {result.error ? (
+            <div className="alert alert-error">{result.error}</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {results.slice(0, 30).map((item, i) => (
+                <div
+                  key={item._id || i}
+                  style={{
+                    background: "#fff",
+                    borderRadius: 12,
+                    padding: 18,
+                    border: "1px solid #e8e8e8",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: 10,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 700,
+                        color: "#e74c3c",
+                      }}
+                    >
+                      {item.word}
+                    </span>
+                    {item.phonetic && (
+                      <span style={{ fontSize: 14, color: "#999" }}>
+                        {item.phonetic}
+                      </span>
+                    )}
+                    {item.short_mean && (
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: "#666",
+                          marginLeft: "auto",
+                        }}
+                      >
+                        {item.short_mean}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 14, color: "#555", lineHeight: 1.6 }}>
+                    {(item.means || []).map((m, j) => (
+                      <div key={j} style={{ marginBottom: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{m.mean}</span>
+                        {m.kind && (
+                          <span
+                            style={{
+                              color: "#999",
+                              fontSize: 12,
+                              marginLeft: 6,
+                            }}
+                          >
+                            ({m.kind})
+                          </span>
+                        )}
+                        {(m.examples || []).slice(0, 2).map((ex, k) => (
+                          <div
+                            key={k}
+                            style={{
+                              fontSize: 12,
+                              color: "#999",
+                              marginLeft: 8,
+                            }}
+                          >
+                            • {ex}
+                          </div>
                         ))}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {results.length === 0 && (
+                <div className="empty">
+                  Không tìm thấy kết quả cho "{keyword}"
                 </div>
               )}
             </div>
@@ -108,49 +155,25 @@ export default function Translate() {
         </div>
       )}
 
-      {/* Translate */}
-      {tab === 'translate' && (
-        <div>
-          <form onSubmit={doTranslate} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <textarea className="form-input" value={transText} onChange={e => setTransText(e.target.value)} placeholder="Nhập văn bản tiếng Nhật cần dịch..." rows={5} style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, resize: 'vertical' }} />
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '12px 24px', fontSize: 15, alignSelf: 'flex-end' }}>Dịch</button>
-          </form>
-          {loading && <div className="spinner" />}
-          {transResult && (
-            <div style={{ marginTop: 16, background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e8e8e8' }}>
-              <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>Kết quả dịch:</div>
-              <div style={{ fontSize: 16, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{transResult}</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tokenize */}
-      {tab === 'tokenize' && (
-        <div>
-          <form onSubmit={doTokenize} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <textarea className="form-input" value={tokenText} onChange={e => setTokenText(e.target.value)} placeholder="Nhập câu tiếng Nhật để tách từ..." rows={3} style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, resize: 'vertical' }} />
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '12px 24px', fontSize: 15, alignSelf: 'flex-end' }}>Tách từ</button>
-          </form>
-          {loading && <div className="spinner" />}
-          {tokenResult && (
-            <div style={{ marginTop: 16 }}>
-              {tokenResult.error ? <div className="alert alert-error">{tokenResult.error}</div> : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {(tokenResult.tokens || tokenResult.words || []).map((t, i) => (
-                    <span key={i} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 8, padding: '8px 14px', fontSize: 16 }}>
-                      {typeof t === 'string' ? t : (t.surface || t.word || t.token)}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ marginTop: 40, padding: 16, background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', fontSize: 13, color: '#999' }}>
-        ⚠️ Dịch vụ yêu cầu MePlay Translator Service chạy trên port 8081.
+      <div
+        style={{
+          marginTop: 40,
+          padding: 16,
+          background: "#fff",
+          borderRadius: 12,
+          border: "1px solid #e8e8e8",
+          fontSize: 13,
+          color: "#999",
+        }}
+      >
+        ⚡ Dữ liệu từ{" "}
+        <a
+          href="https://mazii.net"
+          target="_blank"
+          style={{ color: "#45e3c6" }}
+        >
+          Mazii.net
+        </a>
       </div>
     </div>
   );
