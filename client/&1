@@ -1,0 +1,37 @@
+[31m✗[39m Build failed in 179ms
+[31merror during build:
+[31mBuild failed with 2 errors:
+
+[31m[PARSE_ERROR] [0mIdentifier `d` has already been declared
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Translate.jsx:72:10 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m72 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249m [0md[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249ma[0m[38;5;249mw[0m[38;5;249ma[0m[38;5;249mi[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249mr[0m[38;5;249m.[0m[38;5;249mj[0m[38;5;249ms[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m;[0m
+ [38;5;240m   │[0m                ┬  
+ [38;5;240m   │[0m                ╰── `d` has already been declared here
+ [38;5;240m   │[0m 
+ [38;5;246m74 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249m [0md[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249ma[0m[38;5;249mw[0m[38;5;249ma[0m[38;5;249mi[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249mr[0m[38;5;249m.[0m[38;5;249mj[0m[38;5;249ms[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m;[0m
+ [38;5;240m   │[0m                ┬  
+ [38;5;240m   │[0m                ╰── It can not be redeclared here
+[38;5;246m────╯[0m
+
+[31m[PARSE_ERROR] [0mIdentifier `text` has already been declared
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Translate.jsx:73:10 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m73 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249m [0mtext[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m([0m[38;5;249md[0m[38;5;249m.[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mt[0m[38;5;249m_[0m[38;5;249mb[0m[38;5;249ml[0m[38;5;249mo[0m[38;5;249mc[0m[38;5;249mk[0m[38;5;249ms[0m[38;5;249m [0m[38;5;249m|[0m[38;5;249m|[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m][0m[38;5;249m)[0m[38;5;249m.[0m[38;5;249mm[0m[38;5;249ma[0m[38;5;249mp[0m[38;5;249m([0m[38;5;249m([0m[38;5;249mb[0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249mb[0m[38;5;249m.[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mt[0m[38;5;249m)[0m[38;5;249m.[0m[38;5;249mj[0m[38;5;249mo[0m[38;5;249mi[0m[38;5;249mn[0m[38;5;249m([0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m)[0m[38;5;249m;[0m
+ [38;5;240m   │[0m                ──┬─  
+ [38;5;240m   │[0m                  ╰─── `text` has already been declared here
+ [38;5;240m   │[0m 
+ [38;5;246m75 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249m [0mtext[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249md[0m[38;5;249m.[0m[38;5;249md[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249ma[0m[38;5;249m?[0m[38;5;249m.[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249m|[0m[38;5;249m|[0m[38;5;249m [0m[38;5;249md[0m[38;5;249m.[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249m|[0m[38;5;249m|[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m;[0m
+ [38;5;240m   │[0m                ──┬─  
+ [38;5;240m   │[0m                  ╰─── It can not be redeclared here
+[38;5;246m────╯[0m
+[31m
+    at aggregateBindingErrorsIntoJsError (file:///C:/Users/utube/OneDrive/M%C3%A1y%20t%C3%ADnh/student%20manager/client/node_modules/rolldown/dist/shared/error-B68YLzl3.mjs:48:18)
+    at unwrapBindingResult (file:///C:/Users/utube/OneDrive/M%C3%A1y%20t%C3%ADnh/student%20manager/client/node_modules/rolldown/dist/shared/error-B68YLzl3.mjs:18:128)
+    at #build (file:///C:/Users/utube/OneDrive/M%C3%A1y%20t%C3%ADnh/student%20manager/client/node_modules/rolldown/dist/shared/rolldown-build-DR0wzp0V.mjs:3256:34)
+    at async buildEnvironment (file:///C:/Users/utube/OneDrive/M%C3%A1y%20t%C3%ADnh/student%20manager/client/node_modules/vite/dist/node/chunks/node.js:32575:66)
+    at async Object.build (file:///C:/Users/utube/OneDrive/M%C3%A1y%20t%C3%ADnh/student%20manager/client/node_modules/vite/dist/node/chunks/node.js:32997:19)
+    at async Object.buildApp (file:///C:/Users/utube/OneDrive/M%C3%A1y%20t%C3%ADnh/student%20manager/client/node_modules/vite/dist/node/chunks/node.js:32994:153)
+    at async CAC.<anonymous> (file:///C:/Users/utube/OneDrive/M%C3%A1y%20t%C3%ADnh/student%20manager/client/node_modules/vite/dist/node/cli.js:777:3) {
+  errors: [Getter/Setter]
+}[39m

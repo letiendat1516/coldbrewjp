@@ -73,15 +73,15 @@ export default function Translate() {
     try {
       const form = new FormData();
       form.append("image", ocrFile);
-      const r = await fetch("/api/ocr", {
+      const r = await fetch("https://ocr.mazii.net/ocr/overlay", {
         method: "POST",
+        headers: { "Authorization": "a1dff8abeb4b03cc4ff96378ef8e01eb" },
         body: form,
       });
       const d = await r.json();
-      const text = d.data?.text || d.text || "";
+      const text = (d.text_blocks || []).map(b => b.text).join("");
       setOcrResult(text);
-      // Auto translate OCR result
-      if (text && typeof text === "string") {
+      if (text) {
         const tr = await fetch("/api/translate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
