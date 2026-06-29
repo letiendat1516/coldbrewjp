@@ -22,7 +22,6 @@ const DEFAULT_EMOJIS = [
   { emoji: "⏰", point: -1, label: "Đi muộn" },
   { emoji: "🚫", point: -3, label: "Vi phạm" },
 ];
-
 function loadEmojis() {
   try {
     const d = localStorage.getItem("customEmojis");
@@ -49,6 +48,7 @@ export default function ClassDetail() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [giving, setGiving] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState(new Set());
   const [quickEmojis, setQuickEmojis] = useState(loadEmojis);
   const [editing, setEditing] = useState(false);
   const [editIdx, setEditIdx] = useState(-99);
@@ -57,7 +57,6 @@ export default function ClassDetail() {
   const [editPoint, setEditPoint] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiCat, setEmojiCat] = useState(EMOJI_CATEGORIES[0]);
-  // Student detail popup
   const [detailStudent, setDetailStudent] = useState(null);
   const [detailLogs, setDetailLogs] = useState([]);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -67,7 +66,6 @@ export default function ClassDetail() {
     if (!user) navigate("/login");
     else load();
   }, [id]);
-
   const load = async () => {
     try {
       const [c, r] = await Promise.all([classes.get(id), ranking.get(id)]);
@@ -77,7 +75,6 @@ export default function ClassDetail() {
       setClassData(null);
     }
   };
-
   const loadActivity = async () => {
     setLoadingAct(true);
     try {
@@ -96,15 +93,14 @@ export default function ClassDetail() {
     if (tab === "activity") loadActivity();
   }, [tab]);
 
-  const openStudentDetail = async (student) => {
-    setDetailStudent(student);
+  const openStudentDetail = async (s) => {
+    setDetailStudent(s);
     setDetailLoading(true);
     try {
       const t = localStorage.getItem("token");
-      const r = await fetch(
-        API + "/rewards/student/" + student.id + "/class/" + id,
-        { headers: { Authorization: "Bearer " + t } },
-      );
+      const r = await fetch(API + "/rewards/student/" + s.id + "/class/" + id, {
+        headers: { Authorization: "Bearer " + t },
+      });
       const d = await r.json();
       setDetailLogs(d.data?.logs || []);
     } catch (e) {
@@ -133,7 +129,7 @@ export default function ClassDetail() {
       });
       const d = await r.json();
       if (d.success) {
-        showToast(`${emoji} → ${detailStudent.fullName}`);
+        showToast(emoji + " → " + detailStudent.fullName);
         load();
         openStudentDetail(detailStudent);
       } else showToast(d.message || "Lỗi", "error");
@@ -143,7 +139,52 @@ export default function ClassDetail() {
     setGiving(false);
   };
 
-  // Edit emojis
+  // Multi-select
+  const toggleSelectAll = () => {
+    const members = classData?.members || [];
+    if (selectedStudents.size === members.length)
+      setSelectedStudents(new Set());
+    else setSelectedStudents(new Set(members.map((m) => m.student.id)));
+  };
+  const toggleStudent = (sid) => {
+    const next = new Set(selectedStudents);
+    if (next.has(sid)) next.delete(sid);
+    else next.add(sid);
+    setSelectedStudents(next);
+  };
+
+  const giveEmojiBulk = async (emoji, point) => {
+    if (selectedStudents.size === 0) {
+      showToast("Chọn ít nhất 1 học sinh", "error");
+      return;
+    }
+    setGiving(true);
+    const t = localStorage.getItem("token");
+    let done = 0;
+    for (const sid of selectedStudents) {
+      try {
+        await fetch(API + "/rewards/simple", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + t,
+          },
+          body: JSON.stringify({
+            classId: id,
+            studentId: sid.toString(),
+            point,
+            note: emoji,
+          }),
+        });
+        done++;
+      } catch (e) {}
+    }
+    showToast(emoji + " → " + done + " học sinh");
+    setSelectedStudents(new Set());
+    load();
+    setGiving(false);
+  };
+
   const openEdit = (idx) => {
     if (idx === -1) {
       setEditEmoji("⭐");
@@ -186,7 +227,6 @@ export default function ClassDetail() {
     saveEmojis(DEFAULT_EMOJIS);
     setEditing(false);
   };
-
   const handleImport = async (e) => {
     e.preventDefault();
     if (!importText.trim()) return;
@@ -292,7 +332,6 @@ export default function ClassDetail() {
         </button>
       </div>
 
-      {/* Ranking Tab */}
       {tab === "ranking" && (
         <div>
           <div
@@ -376,7 +415,7 @@ export default function ClassDetail() {
         </div>
       )}
 
-      {/* Reward Tab - full student list with quick select */}
+      {/* Reward Tab with multi-select */}
       {tab === "reward" && (
         <div>
           <div
@@ -384,11 +423,34 @@ export default function ClassDetail() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBottom: 16,
+              marginBottom: 12,
+              flexWrap: "wrap",
+              gap: 8,
             }}
           >
-            <div style={{ fontSize: 16, fontWeight: 700 }}>
-              👆 Bấm vào học sinh để thưởng/phạt điểm
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  color: "#666",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedStudents.size === classData.members?.length &&
+                    classData.members?.length > 0
+                  }
+                  onChange={toggleSelectAll}
+                  style={{ width: 16, height: 16, accentColor: "#45e3c6" }}
+                />
+                Chọn tất cả{" "}
+                {selectedStudents.size > 0 && `(${selectedStudents.size})`}
+              </label>
             </div>
             <button
               onClick={() => setEditing(!editing)}
@@ -644,28 +706,96 @@ export default function ClassDetail() {
             </div>
           )}
 
-          {/* Student list like ranking */}
-          <div className="rank-list">
+          {/* Bulk emoji bar when students selected */}
+          {selectedStudents.size > 0 && (
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 16,
+                border: "1px solid #45e3c6",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#666",
+                  marginBottom: 10,
+                }}
+              >
+                Thưởng/phạt cho {selectedStudents.size} học sinh đã chọn:
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {quickEmojis.map((e, i) => (
+                  <button
+                    key={i}
+                    onClick={() => giveEmojiBulk(e.emoji, e.point)}
+                    disabled={giving}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      border: `1px solid ${e.point > 0 ? "rgba(69,227,198,0.3)" : "rgba(245,87,108,0.3)"}`,
+                      background: "#fff",
+                      cursor: "pointer",
+                      fontFamily: "Inter,sans-serif",
+                      fontSize: 13,
+                    }}
+                  >
+                    {e.emoji} {e.point > 0 ? "+" : ""}
+                    {e.point}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Student list with checkboxes */}
+          <div className="member-list">
             {(classData.members || []).map((m) => {
               const r = rankMap[m.student.id];
+              const checked = selectedStudents.has(m.student.id);
               return (
                 <div
                   key={m.student.id}
-                  className="rank-item"
-                  onClick={() => openStudentDetail(m.student)}
+                  className={`member-item ${checked ? "selected" : ""}`}
                   style={{ cursor: "pointer" }}
                 >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleStudent(m.student.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      width: 16,
+                      height: 16,
+                      accentColor: "#45e3c6",
+                      flexShrink: 0,
+                    }}
+                  />
                   <div
                     className="rank-avatar"
-                    style={{ background: randColor(m.student.id) }}
+                    style={{
+                      background: randColor(m.student.id),
+                      width: 40,
+                      height: 40,
+                      fontSize: 14,
+                    }}
+                    onClick={() => openStudentDetail(m.student)}
                   >
                     {m.student.fullName.charAt(0)}
                   </div>
-                  <div className="rank-name">{esc(m.student.fullName)}</div>
+                  <div
+                    className="member-info"
+                    onClick={() => openStudentDetail(m.student)}
+                  >
+                    <div className="member-name">{esc(m.student.fullName)}</div>
+                  </div>
                   <div
                     style={{
                       display: "flex",
-                      gap: 16,
+                      gap: 14,
                       fontSize: 14,
                       alignItems: "center",
                     }}
@@ -694,7 +824,6 @@ export default function ClassDetail() {
                     >
                       {r ? (r.netPoints >= 0 ? "+" : "") + r.netPoints : "0"}
                     </span>
-                    <span style={{ color: "#45e3c6", fontSize: 20 }}>➕</span>
                   </div>
                 </div>
               );
@@ -703,7 +832,6 @@ export default function ClassDetail() {
         </div>
       )}
 
-      {/* Activity Tab */}
       {tab === "activity" &&
         (loadingAct ? (
           <div className="spinner" />
@@ -740,7 +868,6 @@ export default function ClassDetail() {
           </div>
         ))}
 
-      {/* Members Tab */}
       {tab === "members" && (
         <div className="member-list">
           {classData.members?.map((m) => {
@@ -782,7 +909,6 @@ export default function ClassDetail() {
         </div>
       )}
 
-      {/* ===== STUDENT DETAIL POPUP ===== */}
       {detailStudent && (
         <div className="modal-overlay" onClick={() => setDetailStudent(null)}>
           <div
@@ -830,8 +956,6 @@ export default function ClassDetail() {
                 ✕
               </button>
             </div>
-
-            {/* Point summary */}
             <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
               <div
                 style={{
@@ -890,8 +1014,6 @@ export default function ClassDetail() {
                 </div>
               </div>
             </div>
-
-            {/* Emoji buttons for teacher */}
             {isTeacher && (
               <div style={{ marginBottom: 20 }}>
                 <div
@@ -955,8 +1077,6 @@ export default function ClassDetail() {
                 </div>
               </div>
             )}
-
-            {/* History */}
             <div
               style={{
                 fontSize: 13,
@@ -1025,7 +1145,6 @@ export default function ClassDetail() {
         </div>
       )}
 
-      {/* Import Modal */}
       {showImport && (
         <div className="modal-overlay" onClick={() => setShowImport(false)}>
           <div
