@@ -14,32 +14,28 @@
         />
         <link rel="stylesheet" href="assets/css/main.css" />
         <style>
-            .logo-bar {
-                padding: 12px 0;
-                border-bottom: 1px solid #e8e8e8;
-                background: #fff;
+            .navbar {
                 position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
                 z-index: 1030;
-            }
-            .logo-bar .logo-img {
-                height: 100px;
-                width: auto;
-            }
-            .navbar-row {
                 padding: 8px 0;
                 background: rgba(250, 250, 250, 0.95);
                 backdrop-filter: blur(20px);
                 border-bottom: 1px solid #e8e8e8;
-                position: fixed;
-                top: 124px;
-                left: 0;
-                right: 0;
-                z-index: 1029;
             }
-            .navbar-row .nav-link {
+            .navbar .container {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .nav-links {
+                display: flex;
+                gap: 4px;
+                margin-left: 24px;
+            }
+            .nav-links a {
                 font-size: 14px;
                 font-weight: 500;
                 color: #666;
@@ -47,14 +43,23 @@
                 border-radius: 8px;
                 text-decoration: none;
             }
-            .navbar-row .nav-link:hover {
+            .nav-links a:hover {
                 color: #111;
                 background: #f5f5f5;
             }
-            .navbar-row .nav-link.active {
+            .nav-links a.active {
                 color: #111;
                 font-weight: 600;
                 background: rgba(69, 227, 198, 0.12);
+            }
+            .navbar-brand {
+                margin-top: -46px;
+                margin-bottom: -46px;
+            }
+            .navbar-brand img {
+                height: 100px;
+                width: auto;
+                display: block;
             }
             #userInfo {
                 display: flex;
@@ -92,7 +97,10 @@
                 color: #3bc4a8;
             }
             body {
-                padding-top: 178px;
+                padding-top: 56px;
+                font-family: "Inter", sans-serif;
+                background: #fafafa;
+                color: #111;
             }
             .container {
                 max-width: 1100px;
@@ -114,7 +122,6 @@
             .stat-card .label {
                 font-size: 12px;
                 color: #999;
-                font-weight: 500;
                 text-transform: uppercase;
             }
             .stat-card .value {
@@ -262,7 +269,7 @@
             }
             .toast {
                 position: fixed;
-                top: 190px;
+                top: 70px;
                 right: 24px;
                 padding: 12px 20px;
                 border-radius: 8px;
@@ -305,42 +312,22 @@
         </style>
     </head>
     <body>
-        <div class="logo-bar">
-            <div
-                class="container"
-                style="display: flex; justify-content: center"
-            >
-                <a href="/"
-                    ><img
-                        src="assets/images/logo.svg"
-                        alt="ClassReward"
-                        class="logo-img"
+        <nav class="navbar">
+            <div class="container">
+                <a href="/" class="navbar-brand"
+                    ><img src="assets/images/logo.svg" alt="ClassReward"
                 /></a>
-            </div>
-        </div>
-        <div class="navbar-row">
-            <div
-                class="container"
-                style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                "
-            >
-                <div style="display: flex; gap: 4px">
-                    <a href="/" class="nav-link">Trang chủ</a>
-                    <a href="/#features" class="nav-link">Tính năng</a>
-                    <a href="dashboard.html" class="nav-link active"
-                        >Quản lý lớp học</a
-                    >
+                <div class="nav-links">
+                    <a href="/">Trang chủ</a><a href="/#features">Tính năng</a
+                    ><a href="dashboard.html" class="active">Quản lý lớp học</a>
                 </div>
                 <div id="userInfo">
                     <div class="user-avatar" id="navAvatar">?</div>
-                    <span class="user-name" id="navName"></span>
-                    <button class="btn-sm" onclick="doLogout()">Thoát</button>
+                    <span class="user-name" id="navName"></span
+                    ><button class="btn-sm" onclick="doLogout()">Thoát</button>
                 </div>
             </div>
-        </div>
+        </nav>
 
         <div class="container">
             <div id="loading" style="text-align: center; padding: 80px 0">
@@ -348,7 +335,6 @@
             </div>
             <div id="content" style="display: none"></div>
         </div>
-
         <footer class="app-footer">
             <span>&copy; 2026 ClassReward.</span
             ><span>Tận tâm vì nhà giáo.</span>
@@ -374,7 +360,7 @@
                             type="text"
                             id="classDesc"
                             class="form-input"
-                            placeholder="Mô tả ngắn"
+                            placeholder="Mô tả"
                         />
                     </div>
                     <div style="display: flex; gap: 16px; margin-bottom: 16px">
@@ -473,31 +459,31 @@
                 isTeacher = user.role === "TEACHER" || user.role === "ADMIN";
             !(function () {
                 if (!token) {
-                    window.location.href = "login.html";
+                    location.href = "login.html";
                     return;
                 }
                 document.getElementById("navAvatar").textContent = user.fullName
                     .charAt(0)
                     .toUpperCase();
                 document.getElementById("navName").textContent = user.fullName;
-                loadDashboard();
+                load();
             })();
-            async function loadDashboard() {
+            async function load() {
                 try {
                     const e = await fetch(API + "/classes", {
                             headers: { Authorization: "Bearer " + token },
                         }),
                         t = await e.json();
-                    if (!t.success) throw new Error();
+                    if (!t.success) throw 0;
                     const a = t.data,
                         n = a.reduce((e, t) => e + (t._count?.members || 0), 0);
                     document.getElementById("loading").style.display = "none";
                     let s = document.getElementById("content");
                     s.style.display = "block";
-                    let o = `<div class="stats-row"><div class="stat-card"><div class="label">Lớp học</div><div class="value">${a.length}</div></div><div class="stat-card"><div class="label">Học sinh</div><div class="value">${n}</div></div><div class="stat-card"><div class="label">Thao tác nhanh</div>${isTeacher ? '<button class="btn btn-accent" style="margin-top:8px;" onclick="openCreateClass()">+ Tạo lớp mới</button>' : '<button class="btn btn-accent" style="margin-top:8px;" onclick="openJoinClass()">+ Tham gia lớp</button>'}</div></div>`;
+                    let o = `<div class="stats-row"><div class="stat-card"><div class="label">Lớp học</div><div class="value">${a.length}</div></div><div class="stat-card"><div class="label">Học sinh</div><div class="value">${n}</div></div><div class="stat-card"><div class="label">Thao tác nhanh</div>${isTeacher ? '<button class="btn btn-accent" style="margin-top:8px;" onclick="openCreate()">+ Tạo lớp mới</button>' : '<button class="btn btn-accent" style="margin-top:8px;" onclick="openJoin()">+ Tham gia lớp</button>'}</div></div>`;
                     o += `<div class="section-header"><h2 class="section-title">${isTeacher ? "Lớp của tôi" : "Lớp đã tham gia"}</h2></div>`;
                     if (0 === a.length)
-                        o += `<div class="empty"><p>${isTeacher ? "Chưa có lớp nào." : "Chưa tham gia lớp nào."}</p>${isTeacher ? '<button class="btn btn-accent" onclick="openCreateClass()">Tạo lớp đầu tiên</button>' : '<button class="btn btn-accent" onclick="openJoinClass()">Tham gia ngay</button>'}</div>`;
+                        o += `<div class="empty"><p>${isTeacher ? "Chưa có lớp nào." : "Chưa tham gia lớp nào."}</p>${isTeacher ? '<button class="btn btn-accent" onclick="openCreate()">Tạo lớp đầu tiên</button>' : '<button class="btn btn-accent" onclick="openJoin()">Tham gia ngay</button>'}</div>`;
                     else {
                         o += '<div class="class-grid">';
                         for (const e of a)
@@ -518,12 +504,12 @@
                 const t = document.createElement("div");
                 return ((t.textContent = e), t.innerHTML);
             }
-            function openCreateClass() {
+            function openCreate() {
                 document
                     .getElementById("createClassModal")
                     .classList.add("show");
             }
-            function openJoinClass() {
+            function openJoin() {
                 document.getElementById("joinClassModal").classList.add("show");
             }
             function closeModal() {
@@ -560,7 +546,7 @@
                             t = await e.json();
                         t.success
                             ? (closeModal(),
-                              loadDashboard(),
+                              load(),
                               toast("Tạo lớp thành công!", "success"))
                             : ((document.getElementById(
                                   "modalError",
@@ -570,7 +556,7 @@
                               ).style.display = "block"));
                     } catch (e) {
                         ((document.getElementById("modalError").textContent =
-                            "Lỗi kết nối"),
+                            "Lỗi"),
                             (document.getElementById(
                                 "modalError",
                             ).style.display = "block"));
@@ -597,7 +583,7 @@
                             t = await e.json();
                         t.success
                             ? (closeModal(),
-                              loadDashboard(),
+                              load(),
                               toast("Tham gia thành công!", "success"))
                             : ((document.getElementById(
                                   "joinError",
@@ -607,7 +593,7 @@
                               ).style.display = "block"));
                     } catch (e) {
                         ((document.getElementById("joinError").textContent =
-                            "Lỗi kết nối"),
+                            "Lỗi"),
                             (document.getElementById(
                                 "joinError",
                             ).style.display = "block"));
@@ -622,7 +608,7 @@
             }
             function doLogout() {
                 localStorage.clear();
-                window.location.href = "login.html";
+                location.href = "login.html";
             }
         </script>
     </body>
