@@ -1,9 +1,6 @@
 require("dotenv").config();
 
-// BigInt JSON serialization fix
-BigInt.prototype.toJSON = function () {
-  return this.toString();
-};
+BigInt.prototype.toJSON = function () { return this.toString(); };
 
 const express = require("express");
 const cors = require("cors");
@@ -19,14 +16,12 @@ const announcementRoutes = require("./routes/announcement.routes");
 
 const app = express();
 
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/stickers", stickerRoutes);
@@ -34,18 +29,36 @@ app.use("/api/rewards", rewardRoutes);
 app.use("/api/ranking", rankingRoutes);
 app.use("/api/announcements", announcementRoutes);
 
-// Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Global error handler
+// Mazii dictionary proxy
+app.post("/api/mazii/search", async (req, res) => {
+  try {
+    const { keyword } = req.body;
+    if (!keyword) return res.status(400).json({ success: false, message: "Keyword required" });
+    const r = await fetch("https://mazii.net/api/search/word", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer a1dff8abeb4b03cc4ff96378ef8e01eb",
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://mazii.net/",
+        "Origin": "https://mazii.net",
+      },
+      body: JSON.stringify({ dict: "javi", type: "word", query: keyword, limit: 15, page: 1 }),
+    });
+    const data = await r.json();
+    res.json({ success: true, data: data.data || data });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
+  res.status(err.status || 500).json({ success: false, message: err.message || "Internal Server Error" });
 });
 
 module.exports = app;
