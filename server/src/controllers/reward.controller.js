@@ -248,26 +248,7 @@ exports.giveSimpleReward = async (req, res, next) => {
       where: { classId_studentId: { classId: BigInt(classId), studentId: BigInt(studentId) } }
     });
     if (!member) return res.status(400).json({ success: false, message: 'Student not in class' });
-
-    // Find or create a generic sticker for this teacher
-    let sticker = await prisma.sticker.findFirst({
-      where: { stickerSet: { teacherId: req.user.id }, name: 'Điểm thủ công', type: point >= 0 ? 'REWARD' : 'PENALTY' }
-    });
-    if (!sticker) {
-      let set = await prisma.stickerSet.findFirst({ where: { teacherId: req.user.id, isDefault: true } });
-      if (!set) {
-        set = await prisma.stickerSet.create({ data: { teacherId: req.user.id, name: 'Default', isDefault: true } });
-      }
-      sticker = await prisma.sticker.create({
-        data: { stickerSetId: set.id, name: 'Điểm thủ công', emoji: point >= 0 ? '⭐' : '⚠️', point: Math.abs(point), type: point >= 0 ? 'REWARD' : 'PENALTY' }
-      });
-    }
-
-    const log = await prisma.rewardLog.create({
-      data: { classId: BigInt(classId), studentId: BigInt(studentId), teacherId: req.user.id, stickerId: sticker.id, note },
-      include: { student: { select: { id: true, fullName: true } }, teacher: { select: { id: true, fullName: true } } }
-    });
-
+// Always create a new sticker to preserve the actual point value    let set = await prisma.stickerSet.findFirst({ where: { teacherId: req.user.id, isDefault: true } });    if (!set) {      set = await prisma.stickerSet.create({ data: { teacherId: req.user.id, name: 'Default', isDefault: true } });    }    const sticker = await prisma.sticker.create({      data: { stickerSetId: set.id, name: (note || (point >= 0 ? 'Thưởng' : 'Phạt')), emoji: note || (point >= 0 ? '⭐' : '⚠️'), point: Math.abs(point), type: point >= 0 ? 'REWARD' : 'PENALTY' }    });
     res.status(201).json({ success: true, data: { ...log, point } });
   } catch (error) { next(error); }
 };
