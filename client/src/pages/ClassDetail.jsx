@@ -6,6 +6,58 @@ import { esc, randColor, timeAgo, showToast } from "../utils";
 
 const API = "/api";
 
+const EMOJI_LIST = [
+  "😀",
+  "😂",
+  "🤣",
+  "😍",
+  "🥰",
+  "😘",
+  "😜",
+  "😎",
+  "🤩",
+  "🥳",
+  "😤",
+  "😢",
+  "😭",
+  "😡",
+  "🤬",
+  "👍",
+  "👎",
+  "👏",
+  "🙌",
+  "💪",
+  "🔥",
+  "⭐",
+  "🌟",
+  "✨",
+  "💯",
+  "🎉",
+  "🎊",
+  "🏆",
+  "🥇",
+  "📌",
+  "❤️",
+  "💔",
+  "🎯",
+  "🚀",
+  "💡",
+  "📚",
+  "✏️",
+  "⚠️",
+  "🚫",
+  "❌",
+  "✅",
+  "🟢",
+  "🔴",
+  "🟡",
+  "💩",
+  "👻",
+  "🤖",
+  "🎓",
+  "📝",
+];
+
 export default function ClassDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -21,15 +73,11 @@ export default function ClassDetail() {
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
-
-  // Add sticker form
   const [showAddSticker, setShowAddSticker] = useState(false);
-  const [stickerName, setStickerName] = useState("");
-  const [stickerEmoji, setStickerEmoji] = useState("");
-  const [stickerPoint, setStickerPoint] = useState("1");
   const [stickerType, setStickerType] = useState("REWARD");
-  const [stickerSetId, setStickerSetId] = useState(null);
-
+  const [allStickerSets, setAllStickerSets] = useState([]);
+  const [loadingSets, setLoadingSets] = useState(false);
+  const [pickedEmoji, setPickedEmoji] = useState("⭐");
   const isTeacher = user?.role === "TEACHER" || user?.role === "ADMIN";
 
   useEffect(() => {
@@ -43,16 +91,114 @@ export default function ClassDetail() {
       setClassData(c.data);
       setRankData(r.data);
       const stk = [];
-      const setIds = [];
       if (c.data.stickerSets)
-        for (const m of c.data.stickerSets) {
+        for (const m of c.data.stickerSets)
           if (m.stickerSet?.stickers) stk.push(...m.stickerSet.stickers);
-          setIds.push(m.stickerSetId?.toString());
-        }
       setStickers(stk);
-      if (setIds.length > 0) setStickerSetId(setIds[0]);
     } catch (e) {
       setClassData(null);
+    }
+  };
+
+  const loadStickerSets = async () => {
+    setLoadingSets(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API + "/stickers/sets", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      const data = await res.json();
+      if (data.success) setAllStickerSets(data.data);
+    } catch (e) {}
+    setLoadingSets(false);
+  };
+
+  const openAddSticker = (type) => {
+    setStickerType(type);
+    setShowAddSticker(true);
+    loadStickerSets();
+  };
+
+  const pickSticker = async (sticker) => {
+    try {
+      const token = localStorage.getItem("token");
+      const assigned = classData.stickerSets?.some(
+        (m) => m.stickerSetId?.toString() === sticker.stickerSetId?.toString(),
+      );
+      if (!assigned)
+        await fetch(API + "/stickers/assign", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({
+            classId: id,
+            stickerSetId: sticker.stickerSetId?.toString(),
+          }),
+        });
+      setShowAddSticker(false);
+      showToast("Đã thêm: " + sticker.name);
+      load();
+    } catch (e) {
+      showToast("Lỗi", "error");
+    }
+  };
+
+  const createNewSticker = async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("nsName").value.trim();
+    const point = parseInt(document.getElementById("nsPoint").value) || 1;
+    if (!name) return;
+    try {
+      const token = localStorage.getItem("token");
+      let setId = allStickerSets[0]?.id?.toString();
+      if (!setId) {
+        const sr = await fetch(API + "/stickers/sets", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ name: "Default Stickers", isDefault: true }),
+        });
+        const sd = await sr.json();
+        if (!sd.success) throw new Error(sd.message);
+        setId = sd.data.id.toString();
+      }
+      const sr = await fetch(API + "/stickers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify({
+          stickerSetId: setId,
+          name,
+          emoji: pickedEmoji,
+          point,
+          type: stickerType,
+        }),
+      });
+      const sd = await sr.json();
+      if (!sd.success) throw new Error(sd.message);
+      const already = classData.stickerSets?.some(
+        (m) => m.stickerSetId?.toString() === setId,
+      );
+      if (!already)
+        await fetch(API + "/stickers/assign", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ classId: id, stickerSetId: setId }),
+        });
+      setShowAddSticker(false);
+      showToast("Đã tạo: " + name);
+      load();
+    } catch (e) {
+      showToast(e.message || "Lỗi", "error");
     }
   };
 
@@ -66,16 +212,13 @@ export default function ClassDetail() {
     }
     setLoadingAct(false);
   };
-
   useEffect(() => {
     if (tab === "activity") loadActivity();
   }, [tab]);
-
   const switchTab = (t) => {
     setTab(t);
     if (t !== "reward") setSel(null);
   };
-
   const giveSticker = async (stickerId) => {
     if (!sel) {
       showToast("Chọn học sinh trước", "error");
@@ -90,7 +233,6 @@ export default function ClassDetail() {
       showToast("Lỗi", "error");
     }
   };
-
   const handleImport = async (e) => {
     e.preventDefault();
     if (!importText.trim()) return;
@@ -117,70 +259,7 @@ export default function ClassDetail() {
     setImporting(false);
   };
 
-  const handleAddSticker = async (e) => {
-    e.preventDefault();
-    if (!stickerName.trim() || !stickerPoint) return;
-    try {
-      const token = localStorage.getItem("token");
-
-      // Create or find sticker set
-      let setId = stickerSetId;
-      if (!setId) {
-        // Create a new sticker set for this teacher
-        const setRes = await fetch(API + "/stickers/sets", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
-          body: JSON.stringify({ name: "Default Stickers", isDefault: true }),
-        });
-        const setData = await setRes.json();
-        if (!setData.success) throw new Error(setData.message);
-        setId = setData.data.id.toString();
-
-        // Assign to class
-        await fetch(API + "/stickers/assign", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
-          body: JSON.stringify({ classId: id, stickerSetId: setId }),
-        });
-      }
-
-      // Create sticker
-      const stickerRes = await fetch(API + "/stickers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-        body: JSON.stringify({
-          stickerSetId: setId,
-          name: stickerName.trim(),
-          emoji: stickerEmoji || (stickerType === "REWARD" ? "⭐" : "⚠️"),
-          point: parseInt(stickerPoint),
-          type: stickerType,
-        }),
-      });
-      const stickerData = await stickerRes.json();
-      if (!stickerData.success) throw new Error(stickerData.message);
-
-      setShowAddSticker(false);
-      setStickerName("");
-      setStickerEmoji("");
-      setStickerPoint("1");
-      showToast("Đã thêm sticker: " + stickerName);
-      load();
-    } catch (e) {
-      showToast(e.message || "Lỗi", "error");
-    }
-  };
-
   if (!classData) return <div className="spinner" />;
-
   const rewardsList = stickers.filter((s) => s.type === "REWARD");
   const penaltiesList = stickers.filter((s) => s.type === "PENALTY");
   const ranking2 = rankData?.ranking || [];
@@ -189,6 +268,12 @@ export default function ClassDetail() {
   ranking2.forEach((r) => {
     rankMap[r.student.id] = r;
   });
+  const availableRewards = allStickerSets.flatMap((set) =>
+    (set.stickers || []).filter((s) => s.type === "REWARD"),
+  );
+  const availablePenalties = allStickerSets.flatMap((set) =>
+    (set.stickers || []).filter((s) => s.type === "PENALTY"),
+  );
 
   return (
     <div className="container">
@@ -208,19 +293,12 @@ export default function ClassDetail() {
         </h2>
         <span className="badge badge-green">Mã: {classData.joinCode}</span>
       </div>
-
       <div className="info-bar">
         <span>
           👨‍🏫 <strong>{esc(classData.teacher?.fullName || "—")}</strong>
         </span>
         <span>
           👥 <strong>{classData.members?.length || 0} học sinh</strong>
-        </span>
-        <span>
-          📅{" "}
-          <strong>
-            {classData.schoolYear || "—"} - HK{classData.semester || "—"}
-          </strong>
         </span>
         {isTeacher && (
           <button
@@ -236,7 +314,6 @@ export default function ClassDetail() {
           </button>
         )}
       </div>
-
       <div className="tabs">
         <button
           className={`tab ${tab === "ranking" ? "active" : ""}`}
@@ -266,8 +343,7 @@ export default function ClassDetail() {
         </button>
       </div>
 
-      {/* ... ranking, reward, activity, members tabs (same as before) ... */}
-
+      {/* TABS CONTENT - same as before, keeping it compact */}
       {tab === "ranking" && (
         <div>
           <div
@@ -394,7 +470,6 @@ export default function ClassDetail() {
               Chọn học sinh bên dưới, sau đó chọn sticker để thưởng/phạt.
             </p>
           )}
-
           <div
             style={{
               fontSize: 14,
@@ -433,14 +508,13 @@ export default function ClassDetail() {
               </div>
             ))}
           </div>
-
-          {stickers.length === 0 && !showAddSticker ? (
+          {stickers.length === 0 ? (
             <div className="empty">
               <p>Chưa có sticker nào.</p>
               {isTeacher && (
                 <button
                   className="btn btn-primary mt-2"
-                  onClick={() => setShowAddSticker(true)}
+                  onClick={() => openAddSticker("REWARD")}
                 >
                   + Thêm sticker
                 </button>
@@ -470,10 +544,7 @@ export default function ClassDetail() {
                     </div>
                     {isTeacher && (
                       <button
-                        onClick={() => {
-                          setStickerType("REWARD");
-                          setShowAddSticker(true);
-                        }}
+                        onClick={() => openAddSticker("REWARD")}
                         style={{
                           fontSize: 12,
                           color: "#45e3c6",
@@ -526,10 +597,7 @@ export default function ClassDetail() {
                     </div>
                     {isTeacher && (
                       <button
-                        onClick={() => {
-                          setStickerType("PENALTY");
-                          setShowAddSticker(true);
-                        }}
+                        onClick={() => openAddSticker("PENALTY")}
                         style={{
                           fontSize: 12,
                           color: "#f5576c",
@@ -560,16 +628,6 @@ export default function ClassDetail() {
                   </div>
                 </>
               )}
-              {isTeacher &&
-                (rewardsList.length === 0 || penaltiesList.length === 0) && (
-                  <button
-                    className="btn btn-outline"
-                    style={{ width: "100%", marginTop: 8 }}
-                    onClick={() => setShowAddSticker(true)}
-                  >
-                    + Thêm sticker mới
-                  </button>
-                )}
             </>
           )}
         </div>
@@ -661,7 +719,7 @@ export default function ClassDetail() {
                 className="form-input"
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder={`HE170629\tNguyễn\tMinh\tHiếu\nHE180293\tPhạm\tQuang\tTiến\n...`}
+                placeholder={`HE170629\tNguyễn\tMinh\tHiếu\nHE180293\tPhạm\tQuang\tTiến`}
                 rows={10}
                 style={{
                   fontFamily: "monospace",
@@ -708,102 +766,176 @@ export default function ClassDetail() {
       {/* Add Sticker Modal */}
       {showAddSticker && (
         <div className="modal-overlay" onClick={() => setShowAddSticker(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 560 }}
+          >
             <h3>
-              + Thêm sticker {stickerType === "REWARD" ? "thưởng" : "phạt"}
+              + Thêm sticker{" "}
+              {stickerType === "REWARD" ? "thưởng ⭐" : "phạt ⚠️"}
             </h3>
-            <form onSubmit={handleAddSticker}>
+            <div style={{ marginBottom: 16 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#666",
+                  marginBottom: 10,
+                }}
+              >
+                Chọn từ sticker có sẵn:
+              </div>
+              {loadingSets ? (
+                <div className="spinner" />
+              ) : (
+                <div className="sticker-grid">
+                  {(stickerType === "REWARD"
+                    ? availableRewards
+                    : availablePenalties
+                  ).map((s) => (
+                    <button
+                      key={s.id}
+                      className={`sticker-btn ${stickerType === "REWARD" ? "reward" : "penalty"}`}
+                      onClick={() => pickSticker(s)}
+                    >
+                      <span className="sticker-emoji">
+                        {s.emoji || (stickerType === "REWARD" ? "⭐" : "⚠️")}
+                      </span>
+                      <span className="sticker-name">{esc(s.name)}</span>
+                      <span
+                        className="sticker-point"
+                        style={{
+                          color:
+                            stickerType === "REWARD" ? "#3bc4a8" : "#f5576c",
+                        }}
+                      >
+                        {stickerType === "REWARD" ? "+" : ""}
+                        {s.point}
+                      </span>
+                    </button>
+                  ))}
+                  {(stickerType === "REWARD"
+                    ? availableRewards
+                    : availablePenalties
+                  ).length === 0 && (
+                    <p style={{ color: "#999", fontSize: 13 }}>
+                      Chưa có sticker{" "}
+                      {stickerType === "REWARD" ? "thưởng" : "phạt"} nào.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                margin: "16px 0",
+              }}
+            >
+              <div style={{ flex: 1, height: 1, background: "#e8e8e8" }}></div>
+              <span style={{ fontSize: 12, color: "#999" }}>HOẶC TẠO MỚI</span>
+              <div style={{ flex: 1, height: 1, background: "#e8e8e8" }}></div>
+            </div>
+
+            <form onSubmit={createNewSticker}>
               <div className="form-group">
                 <label className="form-label">Tên sticker</label>
                 <input
+                  id="nsName"
                   className="form-input"
-                  value={stickerName}
-                  onChange={(e) => setStickerName(e.target.value)}
                   placeholder={
                     stickerType === "REWARD" ? "VD: Xuất sắc" : "VD: Đi muộn"
                   }
-                  autoFocus
                 />
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Emoji</label>
-                  <input
-                    className="form-input"
-                    value={stickerEmoji}
-                    onChange={(e) => setStickerEmoji(e.target.value)}
-                    placeholder="⭐"
-                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 28,
+                        minWidth: 36,
+                        textAlign: "center",
+                      }}
+                    >
+                      {pickedEmoji}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(10, 1fr)",
+                      gap: 2,
+                      maxHeight: 140,
+                      overflowY: "auto",
+                      background: "#fafafa",
+                      borderRadius: 8,
+                      padding: 6,
+                    }}
+                  >
+                    {EMOJI_LIST.map((e) => (
+                      <button
+                        key={e}
+                        type="button"
+                        onClick={() => setPickedEmoji(e)}
+                        style={{
+                          fontSize: 20,
+                          padding: 3,
+                          border:
+                            pickedEmoji === e
+                              ? "2px solid #45e3c6"
+                              : "2px solid transparent",
+                          background:
+                            pickedEmoji === e
+                              ? "rgba(69,227,198,0.15)"
+                              : "none",
+                          cursor: "pointer",
+                          borderRadius: 6,
+                        }}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
-                  <label className="form-label">
-                    Điểm {stickerType === "REWARD" ? "(+)" : "(-)"}
-                  </label>
+                  <label className="form-label">Điểm</label>
                   <input
+                    id="nsPoint"
                     className="form-input"
                     type="number"
-                    value={stickerPoint}
-                    onChange={(e) => setStickerPoint(e.target.value)}
+                    defaultValue="1"
                     min="1"
                   />
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Loại</label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => setStickerType("REWARD")}
-                    style={{
-                      flex: 1,
-                      padding: 10,
-                      borderRadius: 8,
-                      border: `2px solid ${stickerType === "REWARD" ? "#45e3c6" : "#e8e8e8"}`,
-                      background:
-                        stickerType === "REWARD"
-                          ? "rgba(69,227,198,0.08)"
-                          : "#fafafa",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    ⭐ Thưởng
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStickerType("PENALTY")}
-                    style={{
-                      flex: 1,
-                      padding: 10,
-                      borderRadius: 8,
-                      border: `2px solid ${stickerType === "PENALTY" ? "#f5576c" : "#e8e8e8"}`,
-                      background:
-                        stickerType === "PENALTY"
-                          ? "rgba(245,87,108,0.06)"
-                          : "#fafafa",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    ⚠️ Phạt
-                  </button>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ flex: 1, padding: 12 }}
+                  style={{ flex: 1, padding: 10 }}
                 >
-                  Thêm
+                  Tạo mới
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline"
-                  style={{ flex: 1, padding: 12 }}
+                  style={{ flex: 1, padding: 10 }}
                   onClick={() => setShowAddSticker(false)}
                 >
-                  Hủy
+                  Đóng
                 </button>
               </div>
             </form>
