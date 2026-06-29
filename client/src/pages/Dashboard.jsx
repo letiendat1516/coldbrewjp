@@ -4,6 +4,19 @@ import { useAuth } from "../auth";
 import { classes } from "../api";
 import { esc, showToast } from "../utils";
 
+const API = "/api";
+
+async function deleteClass(classId) {
+  const token = localStorage.getItem("token");
+  const res = await fetch(API + "/classes/" + classId, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token },
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.message);
+  return data;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -55,6 +68,22 @@ export default function Dashboard() {
       showToast("Tham gia thành công!");
     } catch (err) {
       setModalError(err.message);
+    }
+  };
+
+  const handleDelete = async (classId, className) => {
+    if (
+      !confirm(
+        'Xóa lớp "' + className + '"?\nTất cả dữ liệu sẽ bị mất vĩnh viễn.',
+      )
+    )
+      return;
+    try {
+      await deleteClass(classId);
+      load();
+      showToast("Đã xóa lớp");
+    } catch (err) {
+      showToast(err.message, "error");
     }
   };
 
@@ -119,13 +148,41 @@ export default function Dashboard() {
       ) : (
         <div className="class-grid">
           {data.map((c) => (
-            <Link to={`/class/${c.id}`} key={c.id} className="class-card">
-              <div className="name">{esc(c.className)}</div>
-              <div className="meta">
-                <span>{c._count?.members || 0} học sinh</span>
-              </div>
-              <div className="code">Mã: {esc(c.joinCode)}</div>
-            </Link>
+            <div key={c.id} style={{ position: "relative" }}>
+              <Link
+                to={`/class/${c.id}`}
+                className="class-card"
+                style={{ paddingRight: 50 }}
+              >
+                <div className="name">{esc(c.className)}</div>
+                <div className="meta">
+                  <span>{c._count?.members || 0} học sinh</span>
+                </div>
+                <div className="code">Mã: {esc(c.joinCode)}</div>
+              </Link>
+              {isTeacher && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete(c.id, c.className);
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 12,
+                    background: "none",
+                    border: "none",
+                    fontSize: 18,
+                    cursor: "pointer",
+                    color: "#ccc",
+                    padding: 4,
+                  }}
+                  title="Xóa lớp"
+                >
+                  🗑️
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}
