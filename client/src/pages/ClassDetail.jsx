@@ -89,6 +89,16 @@ export default function ClassDetail() {
     }
     setLoadingAct(false);
   };
+  const undoReward = async (logId) => {
+    if (!confirm("Hoàn tác?")) return;
+    try {
+      const t = localStorage.getItem("token");
+      await fetch(API + "/rewards/" + logId, { method: "DELETE", headers: { Authorization: "Bearer " + t } });
+      showToast("Đã hoàn tác");
+      load();
+      loadActivity();
+    } catch (e) { showToast("Lỗi", "error"); }
+  };
   useEffect(() => {
     if (tab === "activity") loadActivity();
   }, [tab]);
@@ -850,6 +860,7 @@ export default function ClassDetail() {
                     <div className="atitle">
                       {esc(l.student?.fullName || "—")} {isR ? "+" : ""}
                       {l.sticker?.point || 0} điểm
+                  {isTeacher && <button onClick={() => undoReward(l.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#ccc", padding: "2px 6px", marginLeft: 4, flexShrink: 0 }} title="Hoàn tác">↩️</button>}
                     </div>
                     <div className="atime">
                       {timeAgo(l.createdAt)} · {esc(l.teacher?.fullName || "—")}
@@ -861,6 +872,7 @@ export default function ClassDetail() {
                   >
                     {isR ? "+" : "-"}
                     {l.sticker?.point || 0}
+                  {isTeacher && <button onClick={() => undoReward(l.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#ccc", padding: "2px 6px", marginLeft: 4, flexShrink: 0 }} title="Hoàn tác">↩️</button>}
                   </div>
                 </div>
               );
@@ -1131,6 +1143,7 @@ export default function ClassDetail() {
                         <span style={{ fontWeight: 600 }}>
                           {isR ? "+" : "-"}
                           {l.sticker?.point || 0} điểm
+                  {isTeacher && <button onClick={() => undoReward(l.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#ccc", padding: "2px 6px", marginLeft: 4, flexShrink: 0 }} title="Hoàn tác">↩️</button>}
                         </span>
                         <span style={{ color: "#999", marginLeft: 8 }}>
                           {timeAgo(l.createdAt)}
