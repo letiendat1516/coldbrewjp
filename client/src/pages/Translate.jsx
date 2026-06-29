@@ -75,11 +75,11 @@ export default function Translate() {
       form.append("image", ocrFile);
       const r = await fetch("https://ocr.mazii.net/ocr/overlay", {
         method: "POST",
-        headers: { "Authorization": "a1dff8abeb4b03cc4ff96378ef8e01eb" },
+        headers: { Authorization: "a1dff8abeb4b03cc4ff96378ef8e01eb" },
         body: form,
       });
       const d = await r.json();
-      const text = (d.text_blocks || []).map(b => b.text).join("");
+      const text = (d.text_blocks || []).map((b) => b.text).join("");
       setOcrResult(text);
       if (text) {
         const tr = await fetch("/api/translate", {
@@ -102,7 +102,9 @@ export default function Translate() {
     setOcrFile(file);
     setOcrPreview(URL.createObjectURL(file));
     // Auto-submit after state update
-    setTimeout(() => { document.querySelector('#ocrForm')?.requestSubmit(); }, 200);
+    setTimeout(() => {
+      document.querySelector("#ocrForm")?.requestSubmit();
+    }, 200);
   };
 
   const words = dictResult?.words || [];
@@ -150,6 +152,9 @@ export default function Translate() {
               style={{ flex: 1, fontSize: 16 }}
               autoFocus
             />
+            <button
+            />
+            <a href="https://www.google.com/inputtools/try/" target="_blank" className="btn btn-outline" style={{ padding: "12px 14px", fontSize: 18, textDecoration: "none" }} title="Viết tay">✍️</a>
             <button
               type="submit"
               className="btn btn-primary"

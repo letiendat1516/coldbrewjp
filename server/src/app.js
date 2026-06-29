@@ -65,3 +65,17 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+
+// Handwriting proxy
+app.post("/api/handwriting", async (req, res) => {
+  try {
+    const r = await fetch("https://inputtools.google.com/request?itc=ja-t-i0-handwrit&app=translate", {
+      method: "POST", headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0", "Origin": "https://mazii.net" },
+      body: JSON.stringify(req.body)
+    });
+    const text = await r.text();
+    const json = JSON.parse(text.slice(4)); // Google prepends ")]}'" plus newline
+    const candidates = (json[1] || [])[0] || [];
+    res.json({ success: true, data: candidates });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
