@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum ClassStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum StickerType {
+  REWARD
+  PENALTY
+}
+
+model User {
+  id        BigInt     @id @default(autoincrement())
+  fullName  String     @map("full_name") @db.VarChar(100)
+  email     String     @unique @db.VarChar(100)
+  password  String     @db.VarChar(255)
+  avatar    String?    @db.VarChar(255)
+  role      Role       @default(STUDENT)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  ownedClasses       Class[]         @relation("TeacherClasses")
+  memberships        ClassMember[]
+  rewardLogsGiven    RewardLog[]     @relation("TeacherRewards")
+  rewardLogsReceived RewardLog[]     @relation("StudentRewards")
+  stickerSets        StickerSet[]
+  announcements      Announcement[]
+
+  @@map("users")
+}
+
+model Class {
+  id          BigInt      @id @default(autoincrement())
+  teacherId   BigInt      @map("teacher_id")
+  className   String      @map("class_name") @db.VarChar(100)
+  description String?     @db.Text
+  joinCode    String      @unique @map("join_code") @db.VarChar(10)
+  schoolYear  String?     @map("school_year") @db.VarChar(20)
+  semester    Int?
+  status      ClassStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  teacher       User              @relation("TeacherClasses", fields: [teacherId], references: [id])
+  members       ClassMember[]
+  stickerSets   ClassStickerSet[]
+  rewardLogs    RewardLog[]
+  announcements Announcement[]
+
+  @@map("classes")
+}
+
+model ClassMember {
+  id        BigInt   @id @default(autoincrement())
+  classId   BigInt   @map("class_id")
+  studentId BigInt   @map("student_id")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  classRoom Class @relation(fields: [classId], references: [id])
+  student   User  @relation(fields: [studentId], references: [id])
+
+  @@unique([classId, studentId])
+  @@map("class_members")
+}
+
+model StickerSet {
+  id        BigInt    @id @default(autoincrement())
+  teacherId BigInt    @map("teacher_id")
+  name      String    @db.VarChar(100)
+  isDefault Boolean   @default(false) @map("is_default")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  teacher      User              @relation(fields: [teacherId], references: [id])
+  stickers     Sticker[]
+  classMapping ClassStickerSet[]
+
+  @@map("sticker_sets")
+}
+
+model Sticker {
+  id           BigInt      @id @default(autoincrement())
+  stickerSetId BigInt      @map("sticker_set_id")
+  name         String      @db.VarChar(100)
+  emoji        String?     @db.VarChar(20)
+  color        String?     @db.VarChar(20)
+  point        Int
+  type         StickerType
+  sortOrder    Int         @default(0) @map("sort_order")
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  stickerSet StickerSet  @relation(fields: [stickerSetId], references: [id])
+  rewardLogs RewardLog[]
+
+  @@map("stickers")
+}
+
+model ClassStickerSet {
+  id           BigInt @id @default(autoincrement())
+  classId      BigInt @map("class_id")
+  stickerSetId BigInt @map("sticker_set_id")
+
+  classRoom  Class      @relation(fields: [classId], references: [id])
+  stickerSet StickerSet @relation(fields: [stickerSetId], references: [id])
+
+  @@unique([classId, stickerSetId])
+  @@map("class_sticker_sets")
+}
+
+model RewardLog {
+  id        BigInt   @id @default(autoincrement())
+  classId   BigInt   @map("class_id")
+  studentId BigInt   @map("student_id")
+  teacherId BigInt   @map("teacher_id")
+  stickerId BigInt   @map("sticker_id")
+  note      String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  classRoom Class   @relation(fields: [classId], references: [id])
+  student   User    @relation("StudentRewards", fields: [studentId], references: [id])
+  teacher   User    @relation("TeacherRewards", fields: [teacherId], references: [id])
+  sticker   Sticker @relation(fields: [stickerId], references: [id])
+
+  @@map("reward_logs")
+}
+
+model Announcement {
+  id        BigInt   @id @default(autoincrement())
+  classId   BigInt   @map("class_id")
+  teacherId BigInt   @map("teacher_id")
+  title     String   @db.VarChar(200)
+  content   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  classRoom Class @relation(fields: [classId], references: [id])
+  teacher   User  @relation(fields: [teacherId], references: [id])
+
+  @@map("announcements")
+}

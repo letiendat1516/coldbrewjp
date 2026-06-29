@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Register — ClassReward</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="assets/css/main.css" />
+        <style>
+            :root {
+                --color-bg: #fafafa;
+                --color-text: #111111;
+                --color-text-secondary: #666666;
+                --color-text-muted: #999999;
+                --color-accent: #45e3c6;
+                --color-accent-dark: #3bc4a8;
+                --color-white: #ffffff;
+                --color-border: #e8e8e8;
+                --color-error: #f5576c;
+                --radius-sm: 8px;
+                --radius-md: 16px;
+                --radius-lg: 24px;
+                --radius-xl: 32px;
+                --shadow-lg: 0 24px 64px rgba(0,0,0,0.12);
+                --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                --transition-base: 300ms ease;
+                --transition-fast: 150ms ease;
+            }
+
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+
+            body {
+                font-family: var(--font-family);
+                background: var(--color-bg);
+                color: var(--color-text);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                -webkit-font-smoothing: antialiased;
+                background-image:
+                    radial-gradient(ellipse at 20% 50%, rgba(69,227,198,0.08) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 50%, rgba(69,227,198,0.05) 0%, transparent 50%);
+            }
+
+            .login-container {
+                width: 100%;
+                max-width: 440px;
+                padding: 24px;
+            }
+
+            .login-card {
+                background: var(--color-white);
+                border-radius: var(--radius-xl);
+                padding: 48px 40px;
+                box-shadow: var(--shadow-lg);
+                border: 1px solid var(--color-border);
+            }
+
+            .login-logo {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 36px;
+            }
+
+            .login-logo img {
+                height: 48px;
+                width: auto;
+            }
+
+            .login-title {
+                font-size: 28px;
+                font-weight: 800;
+                letter-spacing: -0.03em;
+                text-align: center;
+                margin-bottom: 8px;
+                color: var(--color-text);
+            }
+
+            .login-subtitle {
+                font-size: 15px;
+                color: var(--color-text-muted);
+                text-align: center;
+                margin-bottom: 36px;
+                font-weight: 400;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--color-text-secondary);
+                margin-bottom: 8px;
+                letter-spacing: 0.01em;
+            }
+
+            .form-input {
+                width: 100%;
+                padding: 14px 16px;
+                font-size: 15px;
+                font-family: var(--font-family);
+                color: var(--color-text);
+                background: var(--color-bg);
+                border: 2px solid var(--color-border);
+                border-radius: var(--radius-md);
+                transition: all var(--transition-fast);
+                outline: none;
+            }
+
+            .form-input:focus {
+                border-color: var(--color-accent);
+                background: var(--color-white);
+                box-shadow: 0 0 0 4px rgba(69,227,198,0.12);
+            }
+
+            .form-input::placeholder {
+                color: var(--color-text-muted);
+            }
+
+            .form-input.error {
+                border-color: var(--color-error);
+                box-shadow: 0 0 0 4px rgba(245,87,108,0.1);
+            }
+
+            .error-message {
+                font-size: 12px;
+                color: var(--color-error);
+                margin-top: 6px;
+                font-weight: 500;
+                display: none;
+            }
+
+            .error-message.visible {
+                display: block;
+            }
+
+            .btn-login {
+                width: 100%;
+                padding: 15px;
+                font-size: 16px;
+                font-weight: 700;
+                font-family: var(--font-family);
+                color: var(--color-text);
+                background: var(--color-accent);
+                border: none;
+                border-radius: var(--radius-md);
+                cursor: pointer;
+                transition: all var(--transition-base);
+                letter-spacing: -0.01em;
+                margin-top: 8px;
+            }
+
+            .btn-login:hover {
+                background: var(--color-accent-dark);
+                transform: translateY(-1px);
+                box-shadow: 0 8px 24px rgba(69,227,198,0.3);
+            }
+
+            .btn-login:active {
+                transform: translateY(0);
+            }
+
+            .btn-login:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+            .login-footer {
+                text-align: center;
+                margin-top: 28px;
+                font-size: 14px;
+                color: var(--color-text-muted);
+            }
+
+            .login-footer a {
+                color: var(--color-accent-dark);
+                font-weight: 600;
+                text-decoration: none;
+                transition: color var(--transition-fast);
+            }
+
+            .login-footer a:hover {
+                color: var(--color-text);
+            }
+
+            .role-selector {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+
+            .role-option {
+                flex: 1;
+                padding: 12px 8px;
+                text-align: center;
+                font-size: 13px;
+                font-weight: 600;
+                font-family: var(--font-family);
+                color: var(--color-text-secondary);
+                background: var(--color-bg);
+                border: 2px solid var(--color-border);
+                border-radius: var(--radius-md);
+                cursor: pointer;
+                transition: all var(--transition-fast);
+            }
+
+            .role-option.active {
+                border-color: var(--color-accent);
+                background: rgba(69,227,198,0.08);
+                color: var(--color-text);
+            }
+
+            .role-option:hover {
+                border-color: var(--color-accent);
+            }
+
+            .alert {
+                padding: 12px 16px;
+                border-radius: var(--radius-md);
+                font-size: 13px;
+                font-weight: 500;
+                margin-bottom: 20px;
+                display: none;
+            }
+
+            .alert.visible {
+                display: block;
+            }
+
+            .alert-error {
+                background: rgba(245,87,108,0.08);
+                color: var(--color-error);
+                border: 1px solid rgba(245,87,108,0.2);
+            }
+
+            .alert-success {
+                background: rgba(69,227,198,0.08);
+                color: #2d8a6e;
+                border: 1px solid rgba(69,227,198,0.2);
+            }
+
+            .spinner {
+                display: inline-block;
+                width: 18px;
+                height: 18px;
+                border: 2px solid rgba(0,0,0,0.15);
+                border-top-color: var(--color-text);
+                border-radius: 50%;
+                animation: spin 0.6s linear infinite;
+                vertical-align: middle;
+                margin-right: 6px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            .toggle-password {
+                position: absolute;
+                right: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                color: var(--color-text-muted);
+                font-size: 13px;
+                font-weight: 500;
+                background: none;
+                border: none;
+                padding: 4px 8px;
+            }
+
+            .input-wrapper {
+                position: relative;
+            }
+
+            .password-hint {
+                font-size: 11px;
+                color: var(--color-text-muted);
+                margin-top: 6px;
+            }
+
+            @media (max-width: 480px) {
+                .login-card {
+                    padding: 32px 24px;
+                    border-radius: var(--radius-lg);
+                }
+                .login-title {
+                    font-size: 24px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="login-container">
+            <div class="login-card">
+                <!-- Logo -->
+                <div class="login-logo">
+                    <img src="assets/images/logo.svg" alt="ClassReward" />
+                </div>
+
+                <!-- Title -->
+                <h1 class="login-title">Tạo tài khoản</h1>
+                <p class="login-subtitle">Bắt đầu quản lý lớp học ngay hôm nay</p>
+
+                <!-- Alert -->
+                <div class="alert alert-error" id="alertError"></div>
+                <div class="alert alert-success" id="alertSuccess"></div>
+
+                <!-- Form -->
+                <form id="registerForm" novalidate>
+                    <!-- Họ và tên -->
+                    <div class="form-group">
+                        <label class="form-label" for="fullName">Họ và tên</label>
+                        <input
+                            type="text"
+                            id="fullName"
+                            class="form-input"
+                            placeholder="Nguyễn Văn A"
+                            autocomplete="name"
+                            required
+                        />
+                        <div class="error-message" id="fullNameError"></div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            class="form-input"
+                            placeholder="you@example.com"
+                            autocomplete="email"
+                            required
+                        />
+                        <div class="error-message" id="emailError"></div>
+                    </div>
+
+                    <!-- Mật khẩu -->
+                    <div class="form-group">
+                        <label class="form-label" for="password">Mật khẩu</label>
+                        <div class="input-wrapper">
+                            <input
+                                type="password"
+                                id="password"
+                                class="form-input"
+                                placeholder="Tối thiểu 6 ký tự"
+                                autocomplete="new-password"
+                                required
+                                minlength="6"
+                            />
+                            <button type="button" class="toggle-password" id="togglePassword">
+                                Show
+                            </button>
+                        </div>
+                        <div class="error-message" id="passwordError"></div>
+                    </div>
+
+                    <!-- Role -->
+                    <div class="form-group">
+                        <label class="form-label">Bạn là</label>
+                        <div class="role-selector" id="roleSelector">
+                            <button type="button" class="role-option" data-role="TEACHER">Giáo viên</button>
+                            <button type="button" class="role-option active" data-role="STUDENT">Học sinh</button>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn-login" id="btnRegister">
+                        Create Account
+                    </button>
+                </form>
+
+                <!-- Footer -->
+                <p class="login-footer">
+                    Đã có tài khoản?
+                    <a href="login.html">Đăng nhập</a>
+                </p>
+            </div>
+        </div>
+
+        <script>
+            const API_BASE = 'http://160.250.132.246:4000/api';
+
+            const registerForm = document.getElementById('registerForm');
+            const fullNameInput = document.getElementById('fullName');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const btnRegister = document.getElementById('btnRegister');
+            const alertError = document.getElementById('alertError');
+            const alertSuccess = document.getElementById('alertSuccess');
+            const togglePassword = document.getElementById('togglePassword');
+            const roleSelector = document.getElementById('roleSelector');
+
+            let selectedRole = 'STUDENT';
+
+            // Role selector
+            roleSelector.addEventListener('click', (e) => {
+                const option = e.target.closest('.role-option');
+                if (!option) return;
+                roleSelector.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+                selectedRole = option.dataset.role;
+            });
+
+            // Toggle password
+            togglePassword.addEventListener('click', () => {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                togglePassword.textContent = isPassword ? 'Ẩn' : 'Hiện';
+            });
+
+            // Clear errors on input
+            [fullNameInput, emailInput, passwordInput].forEach(input => {
+                input.addEventListener('input', () => {
+                    input.classList.remove('error');
+                    document.getElementById(input.id + 'Error').classList.remove('visible');
+                });
+            });
+
+            function showAlert(type, message) {
+                const alert = type === 'error' ? alertError : alertSuccess;
+                alert.textContent = message;
+                alert.className = `alert alert-${type} visible`;
+                setTimeout(() => alert.classList.remove('visible'), 5000);
+            }
+
+            function hideAlerts() {
+                alertError.classList.remove('visible');
+                alertSuccess.classList.remove('visible');
+            }
+
+            function setLoading(loading) {
+                btnRegister.disabled = loading;
+                btnRegister.innerHTML = loading
+                    ? '<span class="spinner"></span> Đang tạo tài khoản...'
+                    : 'Create Account';
+            }
+
+            function showFieldError(input, message) {
+                input.classList.add('error');
+                const errorEl = document.getElementById(input.id + 'Error');
+                errorEl.textContent = message;
+                errorEl.classList.add('visible');
+            }
+
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                hideAlerts();
+
+                const fullName = fullNameInput.value.trim();
+                const email = emailInput.value.trim();
+                const password = passwordInput.value.trim();
+                let valid = true;
+
+                if (!fullName || fullName.length < 2) {
+                    showFieldError(fullNameInput, 'Họ tên không được để trống (tối thiểu 2 ký tự)');
+                    valid = false;
+                }
+
+                if (!email) {
+                    showFieldError(emailInput, 'Email không được để trống');
+                    valid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showFieldError(emailInput, 'Vui lòng nhập email hợp lệ');
+                    valid = false;
+                }
+
+                if (!password || password.length < 6) {
+                    showFieldError(passwordInput, 'Mật khẩu ít nhất 6 ký tự');
+                    valid = false;
+                }
+
+                if (!valid) return;
+
+                setLoading(true);
+
+                try {
+                    const res = await fetch(`${API_BASE}/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fullName,
+                            email,
+                            password,
+                            role: selectedRole,
+                        }),
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok && data.success) {
+                        showAlert('success', 'Tạo tài khoản thành công! Đang chuyển đến trang đăng nhập...');
+                        localStorage.setItem('token', data.data.token);
+                        localStorage.setItem('user', JSON.stringify(data.data.user));
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1000);
+                    } else {
+                        showAlert('error', data.message || 'Đăng ký thất bại. Thử lại sau.');
+                    }
+                } catch (err) {
+                    showAlert('error', 'Không kết nối được máy chủ. Thử lại sau.');
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            fullNameInput.focus();
+        </script>
+    </body>
+</html>

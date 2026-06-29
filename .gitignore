@@ -1,0 +1,8 @@
+node_modules/
+server/node_modules/
+server/generated/
+server.tar.gz
+frontend.tar.gz
+*.tar.gz
+.env
+server/.env
