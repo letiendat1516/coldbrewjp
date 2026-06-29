@@ -23,27 +23,17 @@ export default function Navbar() {
             Trang chủ
           </NavLink>
           <NavLink to="/dashboard">Quản lý lớp học</NavLink>
-          <div style={{ position: "relative" }}>
-            <button
-              onClick={() => setShowTranslate(!showTranslate)}
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: "#666",
-                padding: "8px 16px",
-                borderRadius: 8,
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                fontFamily: "Inter, sans-serif",
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-              onMouseEnter={(e) => setShowTranslate(true)}
+          <div
+            style={{ position: "relative" }}
+            onMouseEnter={() => setShowTranslate(true)}
+            onMouseLeave={() => setShowTranslate(false)}
+          >
+            <NavLink
+              to="/translate"
+              style={{ display: "flex", alignItems: "center", gap: 4 }}
             >
-              Dịch <span style={{ fontSize: 10 }}>▼</span>
-            </button>
+              Dịch
+            </NavLink>
             {showTranslate && (
               <div
                 style={{
@@ -58,10 +48,9 @@ export default function Navbar() {
                   minWidth: 180,
                   zIndex: 50,
                 }}
-                onMouseLeave={() => setShowTranslate(false)}
               >
                 <Link
-                  to="/translate"
+                  to="/translate?tab=dictionary"
                   onClick={() => setShowTranslate(false)}
                   style={{
                     display: "block",
@@ -93,7 +82,7 @@ export default function Navbar() {
                   🌐 Dịch văn bản
                 </Link>
                 <Link
-                  to="/translate?tab=tokenize"
+                  to="/translate?tab=ocr"
                   onClick={() => setShowTranslate(false)}
                   style={{
                     display: "block",
@@ -106,7 +95,7 @@ export default function Navbar() {
                   onMouseEnter={(e) => (e.target.style.background = "#f5f5f5")}
                   onMouseLeave={(e) => (e.target.style.background = "none")}
                 >
-                  ✂️ Tách từ
+                  📷 Dịch ảnh
                 </Link>
               </div>
             )}

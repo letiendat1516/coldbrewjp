@@ -1,15 +1,32 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export default function Translate() {
+  const [sp] = useSearchParams();
+  const [tab, setTab] = useState(sp.get("tab") || "dictionary");
+
+  // Dictionary
   const [keyword, setKeyword] = useState("");
-  const [result, setResult] = useState(null);
+  const [dictResult, setDictResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const search = async (e) => {
+  // Translate
+  const [transText, setTransText] = useState("");
+  const [transResult, setTransResult] = useState("");
+  const [sourceLang, setSourceLang] = useState("ja");
+  const [targetLang, setTargetLang] = useState("vi");
+
+  // OCR
+  const [ocrFile, setOcrFile] = useState(null);
+  const [ocrPreview, setOcrPreview] = useState("");
+  const [ocrResult, setOcrResult] = useState("");
+  const [ocrTransResult, setOcrTransResult] = useState("");
+
+  const searchDict = async (e) => {
     e.preventDefault();
     if (!keyword.trim()) return;
     setLoading(true);
-    setResult(null);
+    setDictResult(null);
     try {
       const r = await fetch("/api/mazii/search", {
         method: "POST",
@@ -17,396 +34,529 @@ export default function Translate() {
         body: JSON.stringify({ keyword: keyword.trim() }),
       });
       const d = await r.json();
-      setResult(d.data);
+      setDictResult(d.data);
     } catch (e) {
-      setResult({ error: "Lỗi kết nối" });
+      setDictResult({ error: "Lỗi kết nối" });
     }
     setLoading(false);
   };
 
-  const words = result?.words || [];
-  const suggestions = result?.suggestWords || [];
-  const romajiMap = {
-    a: "a",
-    i: "i",
-    u: "u",
-    e: "e",
-    o: "o",
-    ka: "ka",
-    ki: "ki",
-    ku: "ku",
-    ke: "ke",
-    ko: "ko",
-    sa: "sa",
-    shi: "shi",
-    su: "su",
-    se: "se",
-    so: "so",
-    ta: "ta",
-    chi: "chi",
-    tsu: "tsu",
-    te: "te",
-    to: "to",
-    na: "na",
-    ni: "ni",
-    nu: "nu",
-    ne: "ne",
-    no: "no",
-    ha: "ha",
-    hi: "hi",
-    fu: "fu",
-    he: "he",
-    ho: "ho",
-    ma: "ma",
-    mi: "mi",
-    mu: "mu",
-    me: "me",
-    mo: "mo",
-    ya: "ya",
-    yu: "yu",
-    yo: "yo",
-    ra: "ra",
-    ri: "ri",
-    ru: "ru",
-    re: "re",
-    ro: "ro",
-    wa: "wa",
-    wo: "wo",
-    n: "n",
-    ga: "ga",
-    gi: "gi",
-    gu: "gu",
-    ge: "ge",
-    go: "go",
-    za: "za",
-    ji: "ji",
-    zu: "zu",
-    ze: "ze",
-    zo: "zo",
-    da: "da",
-    ji2: "ji",
-    zu2: "zu",
-    de: "de",
-    do: "do",
-    ba: "ba",
-    bi: "bi",
-    bu: "bu",
-    be: "be",
-    bo: "bo",
-    pa: "pa",
-    pi: "pi",
-    pu: "pu",
-    pe: "pe",
-    po: "po",
+  const doTranslate = async (e) => {
+    e.preventDefault();
+    if (!transText.trim()) return;
+    setLoading(true);
+    setTransResult("");
+    try {
+      const r = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: transText.trim(),
+          sourceLang,
+          targetLang,
+        }),
+      });
+      const d = await r.json();
+      setTransResult(d.data?.translatedText || d.translatedText || "Lỗi");
+    } catch (e) {
+      setTransResult("Lỗi kết nối");
+    }
+    setLoading(false);
   };
 
-  const toRomaji = (kana) => {
-    if (!kana) return "";
-    // rough romaji conversion
-    return kana;
+  const doOCR = async (e) => {
+    e.preventDefault();
+    if (!ocrFile) return;
+    setLoading(true);
+    setOcrResult("");
+    setOcrTransResult("");
+    try {
+      const form = new FormData();
+      form.append("image", ocrFile);
+      const r = await fetch("https://mazii.net/api/ocr", {
+        method: "POST",
+        headers: { Authorization: "Bearer a1dff8abeb4b03cc4ff96378ef8e01eb" },
+        body: form,
+      });
+      const d = await r.json();
+      const text = d.text || d.data || JSON.stringify(d);
+      setOcrResult(text);
+      // Auto translate OCR result
+      if (text && typeof text === "string") {
+        const tr = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, sourceLang: "ja", targetLang: "vi" }),
+        });
+        const td = await tr.json();
+        setOcrTransResult(td.data?.translatedText || "");
+      }
+    } catch (e) {
+      setOcrResult("Lỗi OCR");
+    }
+    setLoading(false);
   };
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setOcrFile(file);
+      setOcrPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const words = dictResult?.words || [];
+  const suggestions = dictResult?.suggestWords || [];
 
   return (
     <div className="container" style={{ paddingTop: 24 }}>
-      <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>
-        📖 Tra từ điển Nhật - Việt
+      <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>
+        🔤 Dịch
       </h2>
-      <p style={{ color: "#999", fontSize: 14, marginBottom: 24 }}>
-        Dữ liệu từ Mazii.net
-      </p>
 
-      <form
-        onSubmit={search}
-        style={{ display: "flex", gap: 8, marginBottom: 16 }}
-      >
-        <input
-          className="form-input"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder="Nhập từ cần tra..."
-          style={{ flex: 1, fontSize: 16 }}
-          autoFocus
-        />
+      <div className="tabs" style={{ marginBottom: 24 }}>
         <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={loading}
-          style={{ padding: "12px 28px", fontSize: 15 }}
+          className={`tab ${tab === "dictionary" ? "active" : ""}`}
+          onClick={() => setTab("dictionary")}
         >
-          🔍 Tra cứu
+          📖 Tra từ điển
         </button>
-      </form>
-
-      {/* Popular words */}
-      <div
-        style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}
-      >
-        {["猫", "勉強", "日本", "ありがとう", "シューシュー"].map((w) => (
-          <button
-            key={w}
-            onClick={() => {
-              setKeyword(w);
-              document.querySelector("form").requestSubmit();
-            }}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 20,
-              border: "1px solid #e8e8e8",
-              background: "#fff",
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: "Inter,sans-serif",
-              color: "#666",
-            }}
-          >
-            {w}
-          </button>
-        ))}
+        <button
+          className={`tab ${tab === "translate" ? "active" : ""}`}
+          onClick={() => setTab("translate")}
+        >
+          🌐 Dịch văn bản
+        </button>
+        <button
+          className={`tab ${tab === "ocr" ? "active" : ""}`}
+          onClick={() => setTab("ocr")}
+        >
+          📷 Dịch ảnh
+        </button>
       </div>
 
-      {loading && <div className="spinner" />}
-
-      {result && (
+      {/* DICTIONARY */}
+      {tab === "dictionary" && (
         <div>
-          {result.error ? (
-            <div className="alert alert-error">{result.error}</div>
-          ) : (
-            <>
-              {/* Exact matches */}
-              {words.length > 0 && (
-                <div style={{ marginBottom: 24 }}>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: "#666",
-                      marginBottom: 12,
-                    }}
-                  >
-                    🎯 Kết quả chính xác ({words.length})
-                  </div>
-                  {words.map((item, i) => (
+          <form
+            onSubmit={searchDict}
+            style={{ display: "flex", gap: 8, marginBottom: 12 }}
+          >
+            <input
+              className="form-input"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Nhập từ cần tra..."
+              style={{ flex: 1, fontSize: 16 }}
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+              style={{ padding: "12px 28px", fontSize: 15 }}
+            >
+              🔍 Tra
+            </button>
+          </form>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              marginBottom: 20,
+            }}
+          >
+            {["猫", "勉強", "日本", "ありがとう"].map((w) => (
+              <button
+                key={w}
+                onClick={() => {
+                  setKeyword(w);
+                }}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 20,
+                  border: "1px solid #e8e8e8",
+                  background: "#fff",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontFamily: "Inter,sans-serif",
+                  color: "#666",
+                }}
+              >
+                {w}
+              </button>
+            ))}
+          </div>
+          {loading && <div className="spinner" />}
+          {dictResult &&
+            (dictResult.error ? (
+              <div className="alert alert-error">{dictResult.error}</div>
+            ) : (
+              <>
+                {words.length > 0 && (
+                  <div style={{ marginBottom: 24 }}>
                     <div
-                      key={i}
                       style={{
-                        background: "#fff",
-                        borderRadius: 16,
-                        padding: 20,
-                        border: "1px solid #e8e8e8",
-                        marginBottom: 10,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "#666",
+                        marginBottom: 12,
                       }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          marginBottom: 8,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 24,
-                            fontWeight: 800,
-                            color: "#e74c3c",
-                          }}
-                        >
-                          {item.word}
-                        </span>
-                        {(item.level || []).map((l) => (
-                          <span
-                            key={l}
-                            style={{
-                              background: "#e8f5e9",
-                              color: "#2e7d32",
-                              padding: "3px 10px",
-                              borderRadius: 6,
-                              fontSize: 12,
-                              fontWeight: 700,
-                            }}
-                          >
-                            {l}
-                          </span>
-                        ))}
-                      </div>
-                      {item.phonetic && (
-                        <div
-                          style={{
-                            fontSize: 16,
-                            color: "#666",
-                            marginBottom: 4,
-                          }}
-                        >
-                          <span>{item.phonetic}</span>
-                          {item.phonetic && (
-                            <span
-                              style={{
-                                color: "#999",
-                                marginLeft: 12,
-                                fontSize: 14,
-                              }}
-                            >
-                              {toRomaji(item.phonetic)}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {(item.means || []).map((m, j) => (
-                        <div
-                          key={j}
-                          style={{
-                            fontSize: 15,
-                            color: "#333",
-                            marginTop: 6,
-                            display: "flex",
-                            alignItems: "baseline",
-                            gap: 6,
-                          }}
-                        >
-                          <span>→</span>
-                          <span>{m.mean}</span>
-                          {m.kind && (
-                            <span style={{ color: "#999", fontSize: 12 }}>
-                              ({m.kind})
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                      {/* Related words (synsets) */}
-                      {(item.synsets || []).map((syn, j) => (
-                        <div
-                          key={j}
-                          style={{
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: 6,
-                            marginTop: 12,
-                          }}
-                        >
-                          {(syn.entry || [])
-                            .flatMap((e) => e.synonym || [])
-                            .map((w, k) => (
-                              <button
-                                key={k}
-                                onClick={() => {
-                                  setKeyword(w);
-                                  document
-                                    .querySelector("form")
-                                    .requestSubmit();
-                                }}
-                                style={{
-                                  padding: "4px 12px",
-                                  borderRadius: 16,
-                                  border: "1px solid #e0e0e0",
-                                  background: "#fafafa",
-                                  cursor: "pointer",
-                                  fontSize: 13,
-                                  color: "#e74c3c",
-                                  fontFamily: "Inter,sans-serif",
-                                }}
-                              >
-                                {w}
-                              </button>
-                            ))}
-                        </div>
-                      ))}
+                      🎯 Kết quả chính xác ({words.length})
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Suggestions */}
-              {suggestions.length > 0 && (
-                <div>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: "#999",
-                      marginBottom: 12,
-                    }}
-                  >
-                    💡 Gợi ý ({suggestions.length})
-                  </div>
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
-                  >
-                    {suggestions.map((item, i) => (
+                    {words.map((item, i) => (
                       <div
                         key={i}
                         style={{
-                          display: "flex",
-                          alignItems: "baseline",
-                          gap: 12,
-                          padding: "10px 16px",
                           background: "#fff",
-                          borderRadius: 8,
-                          border: "1px solid #f0f0f0",
+                          borderRadius: 16,
+                          padding: 20,
+                          border: "1px solid #e8e8e8",
+                          marginBottom: 10,
                         }}
                       >
-                        <button
-                          onClick={() => {
-                            setKeyword(item.word);
-                            document.querySelector("form").requestSubmit();
-                          }}
+                        <div
                           style={{
-                            fontSize: 15,
-                            fontWeight: 600,
-                            color: "#e74c3c",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            fontFamily: "Inter,sans-serif",
-                            textAlign: "left",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            marginBottom: 8,
+                            flexWrap: "wrap",
                           }}
                         >
-                          {item.word}
-                        </button>
-                        {item.phonetic && (
-                          <span style={{ fontSize: 12, color: "#999" }}>
-                            {item.phonetic}
+                          <span
+                            style={{
+                              fontSize: 24,
+                              fontWeight: 800,
+                              color: "#e74c3c",
+                            }}
+                          >
+                            {item.word}
                           </span>
+                          {(item.level || []).map((l) => (
+                            <span
+                              key={l}
+                              style={{
+                                background: "#e8f5e9",
+                                color: "#2e7d32",
+                                padding: "3px 10px",
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 700,
+                              }}
+                            >
+                              {l}
+                            </span>
+                          ))}
+                        </div>
+                        {item.phonetic && (
+                          <div
+                            style={{
+                              fontSize: 16,
+                              color: "#666",
+                              marginBottom: 4,
+                            }}
+                          >
+                            {item.phonetic}
+                          </div>
                         )}
-                        <span style={{ fontSize: 13, color: "#666", flex: 1 }}>
-                          {item.short_mean}
-                        </span>
+                        {(item.means || []).map((m, j) => (
+                          <div
+                            key={j}
+                            style={{
+                              fontSize: 15,
+                              color: "#333",
+                              marginTop: 6,
+                            }}
+                          >
+                            → {m.mean}{" "}
+                            {m.kind && (
+                              <span style={{ color: "#999", fontSize: 12 }}>
+                                ({m.kind})
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                        {(item.synsets || []).map((syn, j) => (
+                          <div
+                            key={j}
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: 6,
+                              marginTop: 12,
+                            }}
+                          >
+                            {(syn.entry || [])
+                              .flatMap((e) => e.synonym || [])
+                              .map((w, k) => (
+                                <button
+                                  key={k}
+                                  onClick={() => {
+                                    setKeyword(w);
+                                  }}
+                                  style={{
+                                    padding: "4px 12px",
+                                    borderRadius: 16,
+                                    border: "1px solid #e0e0e0",
+                                    background: "#fafafa",
+                                    cursor: "pointer",
+                                    fontSize: 13,
+                                    color: "#e74c3c",
+                                    fontFamily: "Inter,sans-serif",
+                                  }}
+                                >
+                                  {w}
+                                </button>
+                              ))}
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+                {suggestions.length > 0 && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "#999",
+                        marginBottom: 12,
+                      }}
+                    >
+                      💡 Gợi ý ({suggestions.length})
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                      }}
+                    >
+                      {suggestions.map((item, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            gap: 12,
+                            padding: "10px 16px",
+                            background: "#fff",
+                            borderRadius: 8,
+                            border: "1px solid #f0f0f0",
+                          }}
+                        >
+                          <button
+                            onClick={() => {
+                              setKeyword(item.word);
+                            }}
+                            style={{
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: "#e74c3c",
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              fontFamily: "Inter,sans-serif",
+                            }}
+                          >
+                            {item.word}
+                          </button>
+                          {item.phonetic && (
+                            <span style={{ fontSize: 12, color: "#999" }}>
+                              {item.phonetic}
+                            </span>
+                          )}
+                          <span
+                            style={{ fontSize: 13, color: "#666", flex: 1 }}
+                          >
+                            {item.short_mean}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {words.length === 0 && suggestions.length === 0 && (
+                  <div className="empty">
+                    Không tìm thấy kết quả cho "{keyword}"
+                  </div>
+                )}
+              </>
+            ))}
+        </div>
+      )}
 
-              {words.length === 0 && suggestions.length === 0 && (
-                <div className="empty">
-                  Không tìm thấy kết quả cho "{keyword}"
-                </div>
-              )}
-            </>
+      {/* TRANSLATE */}
+      {tab === "translate" && (
+        <div>
+          <form onSubmit={doTranslate}>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginBottom: 12,
+                alignItems: "center",
+              }}
+            >
+              <select
+                className="form-input"
+                value={sourceLang}
+                onChange={(e) => setSourceLang(e.target.value)}
+                style={{ width: 100 }}
+              >
+                <option value="ja">Nhật</option>
+                <option value="vi">Việt</option>
+                <option value="en">Anh</option>
+                <option value="ko">Hàn</option>
+                <option value="zh">Trung</option>
+              </select>
+              <span style={{ color: "#999" }}>→</span>
+              <select
+                className="form-input"
+                value={targetLang}
+                onChange={(e) => setTargetLang(e.target.value)}
+                style={{ width: 100 }}
+              >
+                <option value="vi">Việt</option>
+                <option value="ja">Nhật</option>
+                <option value="en">Anh</option>
+                <option value="ko">Hàn</option>
+              </select>
+            </div>
+            <textarea
+              className="form-input"
+              value={transText}
+              onChange={(e) => setTransText(e.target.value)}
+              placeholder="Nhập văn bản cần dịch..."
+              rows={5}
+              style={{
+                fontFamily: "Inter,sans-serif",
+                fontSize: 16,
+                resize: "vertical",
+                width: "100%",
+                marginBottom: 12,
+              }}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+              style={{ padding: "12px 28px", fontSize: 15 }}
+            >
+              🌐 Dịch
+            </button>
+          </form>
+          {loading && <div className="spinner" />}
+          {transResult && (
+            <div
+              style={{
+                marginTop: 16,
+                background: "#fff",
+                borderRadius: 12,
+                padding: 20,
+                border: "1px solid #e8e8e8",
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>
+                Kết quả:
+              </div>
+              <div
+                style={{
+                  fontSize: 16,
+                  lineHeight: 1.6,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {transResult}
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: 40,
-          padding: 16,
-          background: "#fff",
-          borderRadius: 12,
-          border: "1px solid #e8e8e8",
-          fontSize: 13,
-          color: "#999",
-        }}
-      >
-        ⚡ Dữ liệu từ{" "}
-        <a
-          href="https://mazii.net"
-          target="_blank"
-          style={{ color: "#45e3c6" }}
-        >
-          Mazii.net
-        </a>
-      </div>
+      {/* OCR */}
+      {tab === "ocr" && (
+        <div>
+          <form onSubmit={doOCR}>
+            <div style={{ marginBottom: 16 }}>
+              <label
+                style={{
+                  display: "block",
+                  padding: "40px 20px",
+                  border: "2px dashed #e8e8e8",
+                  borderRadius: 12,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  background: "#fafafa",
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFile}
+                  style={{ display: "none" }}
+                />
+                {ocrPreview ? (
+                  <img
+                    src={ocrPreview}
+                    alt="Preview"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: 200,
+                      borderRadius: 8,
+                    }}
+                  />
+                ) : (
+                  <div style={{ color: "#999" }}>
+                    📷 Bấm để chọn ảnh cần dịch
+                  </div>
+                )}
+              </label>
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading || !ocrFile}
+              style={{ padding: "12px 28px", fontSize: 15 }}
+            >
+              📷 Nhận diện & Dịch
+            </button>
+          </form>
+          {loading && <div className="spinner" />}
+          {ocrResult && (
+            <div
+              style={{
+                marginTop: 16,
+                background: "#fff",
+                borderRadius: 12,
+                padding: 20,
+                border: "1px solid #e8e8e8",
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>
+                Văn bản nhận diện:
+              </div>
+              <div style={{ fontSize: 18, marginBottom: 12 }}>{ocrResult}</div>
+              {ocrTransResult && (
+                <>
+                  <div style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>
+                    Dịch:
+                  </div>
+                  <div
+                    style={{ fontSize: 16, color: "#3bc4a8", lineHeight: 1.6 }}
+                  >
+                    {ocrTransResult}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
