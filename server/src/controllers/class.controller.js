@@ -252,6 +252,10 @@ exports.deleteClass = async (req, res, next) => {
         .json({ success: false, message: "Not authorized" });
     }
 
+    await prisma.rewardLog.deleteMany({ where: { classId } });
+    await prisma.announcement.deleteMany({ where: { classId } });
+    await prisma.classStickerSet.deleteMany({ where: { classId } });
+    await prisma.classMember.deleteMany({ where: { classId } });
     await prisma.class.delete({ where: { id: classId } });
 
     res.json({ success: true, message: "Class deleted successfully" });
@@ -325,46 +329,79 @@ exports.importStudents = async (req, res, next) => {
     const { text } = req.body;
 
     const classRoom = await prisma.class.findUnique({ where: { id: classId } });
-    if (!classRoom) return res.status(404).json({ success: false, message: 'Class not found' });
-    if (classRoom.teacherId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ success: false, message: 'Not authorized' });
+    if (!classRoom)
+      return res
+        .status(404)
+        .json({ success: false, message: "Class not found" });
+    if (classRoom.teacherId !== req.user.id && req.user.role !== "ADMIN") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
     }
 
-    const bcrypt = require('bcryptjs');
-    const defaultPassword = await bcrypt.hash('student123', 12);
-    const lines = text.split('\n').filter(l => l.trim());
-    let imported = 0, skipped = 0, errors = [];
+    const bcrypt = require("bcryptjs");
+    const defaultPassword = await bcrypt.hash("student123", 12);
+    const lines = text.split("\n").filter((l) => l.trim());
+    let imported = 0,
+      skipped = 0,
+      errors = [];
 
     for (const line of lines) {
-      const parts = line.split('\t');
-      if (parts.length < 3) { errors.push('Invalid: ' + line); continue; }
+      const parts = line.split("\t");
+      if (parts.length < 3) {
+        errors.push("Invalid: " + line);
+        continue;
+      }
 
-      let studentId = null, nameParts = [];
+      let studentId = null,
+        nameParts = [];
       for (const p of parts) {
         const t = p.trim();
         if (/^[A-Z]{2}\d+$/.test(t)) studentId = t;
         else if (t && !/^\d+$/.test(t)) nameParts.push(t);
       }
 
-      if (!studentId || !nameParts.length) { errors.push('Skip: ' + line); continue; }
+      if (!studentId || !nameParts.length) {
+        errors.push("Skip: " + line);
+        continue;
+      }
 
-      const fullName = nameParts.join(' ');
-      const email = studentId.toLowerCase() + '@classreward.com';
+      const fullName = nameParts.join(" ");
+      const email = studentId.toLowerCase() + "@classreward.com";
 
       try {
         let user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
-          user = await prisma.user.create({ data: { fullName, email, password: defaultPassword, role: 'STUDENT' } });
+          user = await prisma.user.create({
+            data: {
+              fullName,
+              email,
+              password: defaultPassword,
+              role: "STUDENT",
+            },
+          });
         }
         const exists = await prisma.classMember.findUnique({
-          where: { classId_studentId: { classId, studentId: user.id } }
+          where: { classId_studentId: { classId, studentId: user.id } },
         });
-        if (exists) { skipped++; continue; }
-        await prisma.classMember.create({ data: { classId, studentId: user.id } });
+        if (exists) {
+          skipped++;
+          continue;
+        }
+        await prisma.classMember.create({
+          data: { classId, studentId: user.id },
+        });
         imported++;
-      } catch (e) { errors.push(studentId + ': ' + e.message); }
+      } catch (e) {
+        errors.push(studentId + ": " + e.message);
+      }
     }
 
-    res.json({ success: true, data: { imported, skipped, errors, total: lines.length } });
-  } catch (error) { next(error); }
+    res.json({
+      success: true,
+      data: { imported, skipped, errors, total: lines.length },
+    });
+  } catch (error) {
+    next(error);
+  }
 };

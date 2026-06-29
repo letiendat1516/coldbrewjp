@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { classes } from "../api";
 import { esc, showToast } from "../utils";
@@ -148,40 +148,47 @@ export default function Dashboard() {
       ) : (
         <div className="class-grid">
           {data.map((c) => (
-            <div key={c.id} style={{ position: "relative" }}>
-              <Link
-                to={`/class/${c.id}`}
-                className="class-card"
-                style={{ paddingRight: 50 }}
+            <div
+              key={c.id}
+              className="class-card"
+              onClick={() => navigate("/class/" + c.id)}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
               >
-                <div className="name">{esc(c.className)}</div>
-                <div className="meta">
-                  <span>{c._count?.members || 0} học sinh</span>
+                <div className="name" style={{ flex: 1 }}>
+                  {esc(c.className)}
                 </div>
-                <div className="code">Mã: {esc(c.joinCode)}</div>
-              </Link>
-              {isTeacher && (
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleDelete(c.id, c.className);
-                  }}
-                  style={{
-                    position: "absolute",
-                    top: 12,
-                    right: 12,
-                    background: "none",
-                    border: "none",
-                    fontSize: 18,
-                    cursor: "pointer",
-                    color: "#ccc",
-                    padding: 4,
-                  }}
-                  title="Xóa lớp"
-                >
-                  🗑️
-                </button>
-              )}
+                {isTeacher && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(c.id, c.className);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      fontSize: 16,
+                      cursor: "pointer",
+                      color: "#ccc",
+                      padding: "2px 6px",
+                      borderRadius: 6,
+                      flexShrink: 0,
+                    }}
+                    title="Xóa lớp"
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
+              <div className="meta">
+                <span>{c._count?.members || 0} học sinh</span>
+              </div>
+              <div className="code">Mã: {esc(c.joinCode)}</div>
             </div>
           ))}
         </div>
