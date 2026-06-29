@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       "/api": "http://localhost:4000",
       "/assets": "http://localhost:4000",
+      "/dictionary": "http://localhost:8081",
     },
   },
   build: {
