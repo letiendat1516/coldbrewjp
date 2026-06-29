@@ -14,6 +14,48 @@
         />
         <link rel="stylesheet" href="assets/css/main.css" />
         <style>
+            .logo-bar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1030;
+                padding: 12px 0;
+                border-bottom: 1px solid #e8e8e8;
+                background: #fff;
+            }
+            .logo-bar .logo-img {
+                height: 100px;
+                width: auto;
+            }
+            .navbar-row {
+                position: fixed;
+                top: 124px;
+                left: 0;
+                right: 0;
+                z-index: 1029;
+                padding: 8px 0;
+                background: rgba(250, 250, 250, 0.95);
+                backdrop-filter: blur(20px);
+                border-bottom: 1px solid #e8e8e8;
+            }
+            .navbar-row .nav-link {
+                font-size: 14px;
+                font-weight: 500;
+                color: #666;
+                padding: 8px 16px;
+                border-radius: 8px;
+                text-decoration: none;
+            }
+            .navbar-row .nav-link:hover {
+                color: #111;
+                background: #f5f5f5;
+            }
+            .navbar-row .nav-link.active {
+                color: #111;
+                font-weight: 600;
+                background: rgba(69, 227, 198, 0.12);
+            }
             #userInfo {
                 display: flex;
                 align-items: center;
@@ -34,7 +76,7 @@
                 font-weight: 600;
                 font-size: 14px;
             }
-            .btn-logout {
+            .btn-sm {
                 padding: 6px 14px;
                 border-radius: 8px;
                 font-weight: 600;
@@ -45,9 +87,15 @@
                 color: #666;
                 font-family: "Inter", sans-serif;
             }
-            .btn-logout:hover {
+            .btn-sm:hover {
                 border-color: #45e3c6;
                 color: #3bc4a8;
+            }
+            body {
+                padding-top: 178px;
+                font-family: "Inter", sans-serif;
+                background: #fafafa;
+                color: #111;
             }
             .container {
                 max-width: 1100px;
@@ -365,7 +413,7 @@
             }
             .toast {
                 position: fixed;
-                top: 80px;
+                top: 190px;
                 right: 24px;
                 padding: 12px 20px;
                 border-radius: 8px;
@@ -418,50 +466,44 @@
         </style>
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg fixed-top" id="navbar">
-            <div class="container">
-                <a class="navbar-brand" href="/"
+        <div class="logo-bar">
+            <div
+                class="container"
+                style="display: flex; justify-content: center"
+            >
+                <a href="/"
                     ><img
                         src="assets/images/logo.svg"
                         alt="ClassReward"
                         class="logo-img"
                 /></a>
-                <button
-                    class="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav"
-                >
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav mx-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">Trang chủ</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/#features">Tính năng</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="dashboard.html"
-                                >Quản lý lớp học</a
-                            >
-                        </li>
-                    </ul>
-                    <div class="navbar-buttons">
-                        <div id="userInfo">
-                            <div class="user-avatar" id="navAvatar">?</div>
-                            <span class="user-name" id="navName"></span>
-                            <button class="btn-logout" onclick="doLogout()">
-                                Thoát
-                            </button>
-                        </div>
-                    </div>
+            </div>
+        </div>
+        <div class="navbar-row">
+            <div
+                class="container"
+                style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                "
+            >
+                <div style="display: flex; gap: 4px">
+                    <a href="/" class="nav-link">Trang chủ</a>
+                    <a href="/#features" class="nav-link">Tính năng</a>
+                    <a href="dashboard.html" class="nav-link active"
+                        >Quản lý lớp học</a
+                    >
+                </div>
+                <div id="userInfo">
+                    <div class="user-avatar" id="navAvatar">?</div>
+                    <span class="user-name" id="navName"></span
+                    ><button class="btn-sm" onclick="doLogout()">Thoát</button>
                 </div>
             </div>
-        </nav>
+        </div>
 
-        <div class="container" style="padding-top: 120px">
+        <div class="container">
             <div
                 style="
                     display: flex;
@@ -488,231 +530,224 @@
         </div>
 
         <footer class="app-footer">
-            <span>&copy; 2026 ClassReward. Đã đăng ký bản quyền.</span>
-            <span>Tận tâm vì nhà giáo khắp nơi.</span>
+            <span>&copy; 2026 ClassReward.</span
+            ><span>Tận tâm vì nhà giáo.</span>
         </footer>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="assets/js/main.js"></script>
         <script>
-            const API = "/api";
-            const urlParams = new URLSearchParams(window.location.search);
-            const classId = urlParams.get("id");
-            if (!classId) {
-                window.location.href = "dashboard.html";
-            }
-            const token = localStorage.getItem("token");
-            const user = JSON.parse(localStorage.getItem("user") || "{}");
-            const isTeacher = user.role === "TEACHER" || user.role === "ADMIN";
+            const API = "/api",
+                p = new URLSearchParams(location.search),
+                classId = p.get("id");
+            if (!classId) location.href = "dashboard.html";
+            const token = localStorage.getItem("token"),
+                user = JSON.parse(localStorage.getItem("user") || "{}"),
+                isTeacher = user.role === "TEACHER" || user.role === "ADMIN";
             let classData = null,
                 stickers = [],
-                selectedStudent = null,
-                activeTab = "ranking";
-            (function init() {
+                sel = null,
+                tab = "ranking";
+            !(function () {
                 if (!token) {
-                    window.location.href = "login.html";
+                    location.href = "login.html";
                     return;
                 }
                 document.getElementById("navAvatar").textContent = user.fullName
                     .charAt(0)
                     .toUpperCase();
                 document.getElementById("navName").textContent = user.fullName;
-                loadClassData();
+                load();
             })();
-            async function loadClassData() {
+            async function load() {
                 try {
-                    const [classRes, rankRes] = await Promise.all([
-                        fetch(API + "/classes/" + classId, {
-                            headers: { Authorization: "Bearer " + token },
-                        }),
-                        fetch(API + "/ranking/class/" + classId, {
-                            headers: { Authorization: "Bearer " + token },
-                        }),
-                    ]);
-                    const classJson = await classRes.json();
-                    const rankJson = await rankRes.json();
-                    if (!classJson.success) throw new Error("Not found");
-                    classData = classJson.data;
+                    const [e, t] = await Promise.all([
+                            fetch(API + "/classes/" + classId, {
+                                headers: { Authorization: "Bearer " + token },
+                            }),
+                            fetch(API + "/ranking/class/" + classId, {
+                                headers: { Authorization: "Bearer " + token },
+                            }),
+                        ]),
+                        a = await e.json(),
+                        n = await t.json();
+                    if (!a.success) throw 0;
+                    classData = a.data;
                     stickers = [];
                     if (classData.stickerSets)
-                        for (const m of classData.stickerSets)
-                            if (m.stickerSet?.stickers)
-                                stickers.push(...m.stickerSet.stickers);
+                        for (const e of classData.stickerSets)
+                            if (e.stickerSet?.stickers)
+                                stickers.push(...e.stickerSet.stickers);
                     document.getElementById("classTitle").textContent =
                         classData.className;
                     document.getElementById("classCode").textContent =
                         "Mã: " + classData.joinCode;
                     document.getElementById("loading").style.display = "none";
-                    render(rankJson.data);
+                    render(n.data);
                 } catch (e) {
-                    document.getElementById("loading").style.display = "none";
-                    document.getElementById("content").innerHTML =
-                        '<div class="empty"><p>Không thể tải dữ liệu lớp.</p><a href="dashboard.html">← Quay lại</a></div>';
+                    ((document.getElementById("loading").style.display =
+                        "none"),
+                        (document.getElementById("content").innerHTML =
+                            '<div class="empty"><p>Lỗi tải dữ liệu.</p><a href="dashboard.html">← Quay lại</a></div>'));
                 }
             }
-            function render(rankData) {
-                const content = document.getElementById("content");
-                content.style.display = "block";
-                let html = `<div class="info-bar"><span>👨‍🏫 <strong>${esc(classData.teacher?.fullName || "—")}</strong></span><span>👥 <strong>${classData.members?.length || 0} học sinh</strong></span><span>📅 <strong>${classData.schoolYear || "—"} - HK${classData.semester || "—"}</strong></span></div>`;
-                html += `<div class="tabs"><button class="tab ${activeTab === "ranking" ? "active" : ""}" onclick="switchTab('ranking')">🏆 Bảng xếp hạng</button>`;
-                if (isTeacher)
-                    html += `<button class="tab ${activeTab === "reward" ? "active" : ""}" onclick="switchTab('reward')">⭐ Thưởng / Phạt</button>`;
-                html += `<button class="tab ${activeTab === "activity" ? "active" : ""}" onclick="switchTab('activity')">📋 Hoạt động</button><button class="tab ${activeTab === "members" ? "active" : ""}" onclick="switchTab('members')">👥 Thành viên</button></div>`;
-                if (activeTab === "ranking") html += renderRanking(rankData);
-                else if (activeTab === "reward") html += renderReward();
-                else if (activeTab === "members")
-                    html += renderMembers(rankData);
-                else if (activeTab === "activity")
-                    html +=
-                        '<div id="activityList"><div class="spinner"></div></div>';
-                content.innerHTML = html;
-                if (activeTab === "activity") loadActivity();
+            function render(e) {
+                const t = document.getElementById("content");
+                t.style.display = "block";
+                let a = `<div class="info-bar"><span>👨‍🏫 <strong>${esc(classData.teacher?.fullName || "—")}</strong></span><span>👥 <strong>${classData.members?.length || 0} học sinh</strong></span><span>📅 <strong>${classData.schoolYear || "—"} - HK${classData.semester || "—"}</strong></span></div>`;
+                a += `<div class="tabs"><button class="tab ${"ranking" === tab ? "active" : ""}" onclick="sw('ranking')">🏆 Bảng xếp hạng</button>`;
+                isTeacher &&
+                    (a += `<button class="tab ${"reward" === tab ? "active" : ""}" onclick="sw('reward')">⭐ Thưởng / Phạt</button>`);
+                a += `<button class="tab ${"activity" === tab ? "active" : ""}" onclick="sw('activity')">📋 Hoạt động</button><button class="tab ${"members" === tab ? "active" : ""}" onclick="sw('members')">👥 Thành viên</button></div>`;
+                "ranking" === tab
+                    ? (a += rk(e))
+                    : "reward" === tab
+                      ? (a += rw())
+                      : "members" === tab
+                        ? (a += rm(e))
+                        : "activity" === tab &&
+                          (a +=
+                              '<div id="al"><div class="spinner"></div></div>');
+                t.innerHTML = a;
+                "activity" === tab && la();
             }
-            function renderRanking(rankData) {
-                const ranking = rankData?.ranking || [],
-                    summary = rankData?.summary || {};
-                if (ranking.length === 0)
-                    return '<div class="empty"><p>Chưa có dữ liệu xếp hạng.</p></div>';
-                let html = `<div class="stats-row"><div class="stat-card"><div class="label">Tổng thưởng</div><div class="value green">+${summary.totalRewardsGiven || 0}</div></div><div class="stat-card"><div class="label">Tổng phạt</div><div class="value red">-${summary.totalPenaltiesGiven || 0}</div></div><div class="stat-card"><div class="label">Lượt thao tác</div><div class="value">${summary.totalActions || 0}</div></div></div>`;
-                html += '<div class="rank-list">';
-                for (const r of ranking) {
-                    const tc =
-                        r.rank === 1
+            function rk(e) {
+                const t = e?.ranking || [],
+                    a = e?.summary || {};
+                if (0 === t.length)
+                    return '<div class="empty"><p>Chưa có dữ liệu.</p></div>';
+                let n = `<div class="stats-row"><div class="stat-card"><div class="label">Tổng thưởng</div><div class="value green">+${a.totalRewardsGiven || 0}</div></div><div class="stat-card"><div class="label">Tổng phạt</div><div class="value red">-${a.totalPenaltiesGiven || 0}</div></div><div class="stat-card"><div class="label">Lượt thao tác</div><div class="value">${a.totalActions || 0}</div></div></div>`;
+                n += '<div class="rank-list">';
+                for (const e of t) {
+                    const a =
+                        1 === e.rank
                             ? "top1"
-                            : r.rank === 2
+                            : 2 === e.rank
                               ? "top2"
-                              : r.rank === 3
+                              : 3 === e.rank
                                 ? "top3"
                                 : "";
-                    html += `<div class="rank-item ${tc}"><div class="rank-num">${["", "🥇", "🥈", "🥉"][r.rank] || r.rank}</div><div class="rank-avatar" style="background:${rc(r.student.id)}">${r.student.fullName.charAt(0)}</div><div class="rank-name">${esc(r.student.fullName)}</div><div class="rank-points"><span class="plus">+${r.totalReward}</span><span class="minus">-${r.totalPenalty}</span><span class="net" style="color:${r.netPoints >= 0 ? "#3bc4a8" : "#f5576c"}">${r.netPoints >= 0 ? "+" : ""}${r.netPoints}</span></div></div>`;
+                    n += `<div class="rank-item ${a}"><div class="rank-num">${["", "🥇", "🥈", "🥉"][e.rank] || e.rank}</div><div class="rank-avatar" style="background:${rc(e.student.id)}">${e.student.fullName.charAt(0)}</div><div class="rank-name">${esc(e.student.fullName)}</div><div class="rank-points"><span class="plus">+${e.totalReward}</span><span class="minus">-${e.totalPenalty}</span><span class="net" style="color:${e.netPoints >= 0 ? "#3bc4a8" : "#f5576c"}">${e.netPoints >= 0 ? "+" : ""}${e.netPoints}</span></div></div>`;
                 }
-                return html + "</div>";
+                return n + "</div>";
             }
-            function renderReward() {
-                if (classData.members.length === 0)
-                    return '<div class="empty"><p>Chưa có học sinh trong lớp.</p></div>';
-                const rewards = stickers.filter((s) => s.type === "REWARD"),
-                    penalties = stickers.filter((s) => s.type === "PENALTY");
-                let html = "";
-                if (selectedStudent) {
-                    const s = selectedStudent;
-                    html += `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border-radius:8px;border:1px solid #45e3c6;margin-bottom:16px;"><div class="member-avatar" style="background:${rc(s.id)}">${s.fullName.charAt(0)}</div><div style="flex:1;"><strong>${esc(s.fullName)}</strong><br><span style="font-size:12px;color:#999;">${esc(s.email)}</span></div><button style="color:#999;background:none;border:none;cursor:pointer;font-size:18px;" onclick="selectedStudent=null;switchTab('reward')">✕</button></div>`;
+            function rw() {
+                if (0 === classData.members.length)
+                    return '<div class="empty"><p>Chưa có học sinh.</p></div>';
+                const e = stickers.filter((e) => "REWARD" === e.type),
+                    t = stickers.filter((e) => "PENALTY" === e.type);
+                let a = "";
+                if (sel) {
+                    a += `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:8px;border:1px solid #45e3c6;margin-bottom:16px;"><div class="member-avatar" style="background:${rc(sel.id)}">${sel.fullName.charAt(0)}</div><div style="flex:1;"><strong>${esc(sel.fullName)}</strong></div><button style="color:#999;background:none;border:none;cursor:pointer;font-size:18px;" onclick="sel=null;sw('reward')">✕</button></div>`;
                 } else
-                    html +=
-                        '<p style="color:#666;margin-bottom:12px;">Chọn học sinh bên dưới, sau đó chọn sticker.</p>';
-                html +=
+                    a +=
+                        '<p style="color:#666;margin-bottom:12px;">Chọn học sinh bên dưới rồi chọn sticker.</p>';
+                a +=
                     '<div class="section-title">Chọn học sinh</div><div class="member-list" style="margin-bottom:16px;max-height:200px;overflow-y:auto;">';
-                for (const m of classData.members) {
-                    const s = m.student;
-                    html += `<div class="member-item ${selectedStudent?.id === s.id ? "selected" : ""}" onclick="selectStudent(${s.id})"><div class="member-avatar" style="background:${rc(s.id)}">${s.fullName.charAt(0)}</div><div class="member-info"><div class="member-name">${esc(s.fullName)}</div></div></div>`;
-                }
-                html += "</div>";
-                if (stickers.length === 0)
+                for (const e of classData.members)
+                    a += `<div class="member-item ${sel?.id === e.student.id ? "selected" : ""}" onclick="selStu(${e.student.id})"><div class="member-avatar" style="background:${rc(e.student.id)}">${e.student.fullName.charAt(0)}</div><div class="member-info"><div class="member-name">${esc(e.student.fullName)}</div></div></div>`;
+                a += "</div>";
+                if (0 === stickers.length)
                     return (
-                        html +
-                        '<div class="empty"><p>Chưa có sticker nào.</p></div>'
+                        a + '<div class="empty"><p>Chưa có sticker.</p></div>'
                     );
-                if (rewards.length > 0) {
-                    html +=
-                        '<div class="section-title">⭐ Thưởng</div><div class="sticker-grid">';
-                    for (const s of rewards)
-                        html += `<button class="sticker-btn reward" onclick="giveSticker('${s.id}')"><span class="emoji">${s.emoji || "⭐"}</span><span class="sname">${esc(s.name)}</span><span class="spoint" style="color:#3bc4a8">+${s.point}</span></button>`;
-                    html += "</div>";
-                }
-                if (penalties.length > 0) {
-                    html +=
-                        '<div class="section-title">⚠️ Phạt</div><div class="sticker-grid">';
-                    for (const s of penalties)
-                        html += `<button class="sticker-btn penalty" onclick="giveSticker('${s.id}')"><span class="emoji">${s.emoji || "⚠️"}</span><span class="sname">${esc(s.name)}</span><span class="spoint" style="color:#f5576c">${s.point}</span></button>`;
-                    html += "</div>";
-                }
-                return html;
+                e.length > 0 &&
+                    ((a +=
+                        '<div class="section-title">⭐ Thưởng</div><div class="sticker-grid">'),
+                    e.forEach((e) => {
+                        a += `<button class="sticker-btn reward" onclick="give('${e.id}')"><span class="emoji">${e.emoji || "⭐"}</span><span class="sname">${esc(e.name)}</span><span class="spoint" style="color:#3bc4a8">+${e.point}</span></button>`;
+                    }),
+                    (a += "</div>"));
+                t.length > 0 &&
+                    ((a +=
+                        '<div class="section-title">⚠️ Phạt</div><div class="sticker-grid">'),
+                    t.forEach((e) => {
+                        a += `<button class="sticker-btn penalty" onclick="give('${e.id}')"><span class="emoji">${e.emoji || "⚠️"}</span><span class="sname">${esc(e.name)}</span><span class="spoint" style="color:#f5576c">${e.point}</span></button>`;
+                    }),
+                    (a += "</div>"));
+                return a;
             }
-            function renderMembers(rankData) {
-                const ranking = rankData?.ranking || [],
-                    rankMap = {};
-                ranking.forEach((r) => {
-                    rankMap[r.student.id] = r;
+            function rm(e) {
+                const t = e?.ranking || [],
+                    a = {};
+                t.forEach((e) => {
+                    a[e.student.id] = e;
                 });
-                let html = '<div class="member-list">';
-                for (const m of classData.members) {
-                    const s = m.student,
-                        r = rankMap[s.id];
-                    html += `<div class="member-item"><div class="member-avatar" style="background:${rc(s.id)}">${s.fullName.charAt(0)}</div><div class="member-info"><div class="member-name">${esc(s.fullName)}</div><div class="member-email">${esc(s.email)}</div></div><div class="member-score" style="color:${(r?.netPoints || 0) >= 0 ? "#3bc4a8" : "#f5576c"}">${r ? (r.netPoints >= 0 ? "+" : "") + r.netPoints : "0"}</div></div>`;
+                let n = '<div class="member-list">';
+                for (const e of classData.members) {
+                    const t = e.student,
+                        r = a[t.id];
+                    n += `<div class="member-item"><div class="member-avatar" style="background:${rc(t.id)}">${t.fullName.charAt(0)}</div><div class="member-info"><div class="member-name">${esc(t.fullName)}</div><div class="member-email">${esc(t.email)}</div></div><div class="member-score" style="color:${(r?.netPoints || 0) >= 0 ? "#3bc4a8" : "#f5576c"}">${r ? (r.netPoints >= 0 ? "+" : "") + r.netPoints : "0"}</div></div>`;
                 }
-                return html + "</div>";
+                return n + "</div>";
             }
-            async function loadActivity() {
+            async function la() {
                 try {
-                    const res = await fetch(
-                        API + "/rewards/class/" + classId + "?limit=30",
-                        { headers: { Authorization: "Bearer " + token } },
-                    );
-                    const data = await res.json(),
-                        logs = data.data?.logs || [];
-                    let html =
+                    const e = await fetch(
+                            API + "/rewards/class/" + classId + "?limit=30",
+                            { headers: { Authorization: "Bearer " + token } },
+                        ),
+                        t = await e.json(),
+                        a = t.data?.logs || [];
+                    let n =
                         '<div style="display:flex;flex-direction:column;gap:4px;">';
-                    if (logs.length === 0)
-                        html +=
-                            '<div class="empty"><p>Chưa có hoạt động nào.</p></div>';
+                    if (0 === a.length)
+                        n +=
+                            '<div class="empty"><p>Chưa có hoạt động.</p></div>';
                     else
-                        for (const l of logs)
-                            html += `<div class="activity-item"><div class="activity-emoji">${l.sticker?.emoji || "📌"}</div><div class="activity-info"><div class="atitle">${esc(l.student?.fullName || "—")} — ${esc(l.sticker?.name || "—")}</div><div class="atime">${timeAgo(l.createdAt)} · bởi ${esc(l.teacher?.fullName || "—")}</div></div><div class="activity-point ${l.sticker?.type === "REWARD" ? "plus" : "minus"}">${l.sticker?.type === "REWARD" ? "+" : ""}${l.sticker?.point || 0}</div></div>`;
-                    document.getElementById("activityList").innerHTML =
-                        html + "</div>";
+                        for (const e of a)
+                            n += `<div class="activity-item"><div class="activity-emoji">${e.sticker?.emoji || "📌"}</div><div class="activity-info"><div class="atitle">${esc(e.student?.fullName || "—")} — ${esc(e.sticker?.name || "—")}</div><div class="atime">${ta(e.createdAt)} · ${esc(e.teacher?.fullName || "—")}</div></div><div class="activity-point ${"REWARD" === e.sticker?.type ? "plus" : "minus"}">${"REWARD" === e.sticker?.type ? "+" : ""}${e.sticker?.point || 0}</div></div>`;
+                    document.getElementById("al").innerHTML = n + "</div>";
                 } catch (e) {
-                    document.getElementById("activityList").innerHTML =
+                    document.getElementById("al").innerHTML =
                         '<div class="empty">Lỗi</div>';
                 }
             }
-            function selectStudent(id) {
-                const m = classData.members.find((m) => m.student.id == id);
-                if (m) selectedStudent = m.student;
-                switchTab("reward");
+            function selStu(e) {
+                const t = classData.members.find((t) => t.student.id == e);
+                t && (sel = t.student);
+                sw("reward");
             }
-            async function giveSticker(stickerId) {
-                if (!selectedStudent) {
+            async function give(e) {
+                if (!sel) {
                     toast("Chọn học sinh trước", "error");
                     return;
                 }
                 try {
-                    const res = await fetch(API + "/rewards", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer " + token,
-                        },
-                        body: JSON.stringify({
-                            classId,
-                            studentId: selectedStudent.id.toString(),
-                            stickerId,
+                    const t = await fetch(API + "/rewards", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: "Bearer " + token,
+                            },
+                            body: JSON.stringify({
+                                classId,
+                                studentId: sel.id.toString(),
+                                stickerId: e,
+                            }),
                         }),
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        const s = stickers.find((s) => s.id == stickerId);
+                        a = await t.json();
+                    if (a.success) {
+                        const e = stickers.find((e) => e.id == e);
                         toast(
-                            `${s?.emoji || ""} ${s?.name || ""} → ${esc(selectedStudent.fullName)}`,
+                            `${e?.emoji || ""} ${e?.name || ""} → ${esc(sel.fullName)}`,
                             "success",
                         );
-                        await loadClassData();
-                    } else toast(data.message || "Lỗi", "error");
+                        await load();
+                    } else toast(a.message || "Lỗi", "error");
                 } catch (e) {
                     toast("Lỗi kết nối", "error");
                 }
             }
-            function switchTab(tab) {
-                activeTab = tab;
-                if (tab !== "reward") selectedStudent = null;
-                loadClassData();
+            function sw(e) {
+                tab = e;
+                "reward" !== e && (sel = null);
+                load();
             }
-            function esc(s) {
-                const d = document.createElement("div");
-                d.textContent = s;
-                return d.innerHTML;
+            function esc(e) {
+                const t = document.createElement("div");
+                return ((t.textContent = e), t.innerHTML);
             }
-            function rc(id) {
-                const c = [
+            function rc(e) {
+                const t = [
                     "#45E3C6",
                     "#667EEA",
                     "#F5576C",
@@ -723,27 +758,28 @@
                     "#FF5722",
                     "#3F51B5",
                 ];
-                return c[Number(BigInt(id) % BigInt(c.length))] || c[0];
+                return t[Number(BigInt(e) % BigInt(t.length))] || t[0];
             }
-            function timeAgo(d) {
-                const diff = Date.now() - new Date(d).getTime(),
-                    m = Math.floor(diff / 60000);
-                if (m < 1) return "Vừa xong";
-                if (m < 60) return m + " phút trước";
-                const h = Math.floor(m / 60);
-                if (h < 24) return h + " giờ trước";
-                return Math.floor(h / 24) + " ngày trước";
+            function ta(e) {
+                const t = Date.now() - new Date(e).getTime(),
+                    a = Math.floor(t / 6e4);
+                if (a < 1) return "Vừa xong";
+                if (a < 60) return a + " phút trước";
+                const n = Math.floor(a / 60);
+                return n < 24
+                    ? n + " giờ trước"
+                    : Math.floor(n / 24) + " ngày trước";
             }
-            function toast(msg, type) {
-                const el = document.createElement("div");
-                el.className = "toast toast-" + type;
-                el.textContent = msg;
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 3000);
+            function toast(e, t) {
+                const a = document.createElement("div");
+                ((a.className = "toast toast-" + t),
+                    (a.textContent = e),
+                    document.body.appendChild(a),
+                    setTimeout(() => a.remove(), 3e3));
             }
             function doLogout() {
                 localStorage.clear();
-                window.location.href = "login.html";
+                location.href = "login.html";
             }
         </script>
     </body>

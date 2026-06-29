@@ -14,6 +14,48 @@
         />
         <link rel="stylesheet" href="assets/css/main.css" />
         <style>
+            .logo-bar {
+                padding: 12px 0;
+                border-bottom: 1px solid #e8e8e8;
+                background: #fff;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1030;
+            }
+            .logo-bar .logo-img {
+                height: 100px;
+                width: auto;
+            }
+            .navbar-row {
+                padding: 8px 0;
+                background: rgba(250, 250, 250, 0.95);
+                backdrop-filter: blur(20px);
+                border-bottom: 1px solid #e8e8e8;
+                position: fixed;
+                top: 124px;
+                left: 0;
+                right: 0;
+                z-index: 1029;
+            }
+            .navbar-row .nav-link {
+                font-size: 14px;
+                font-weight: 500;
+                color: #666;
+                padding: 8px 16px;
+                border-radius: 8px;
+                text-decoration: none;
+            }
+            .navbar-row .nav-link:hover {
+                color: #111;
+                background: #f5f5f5;
+            }
+            .navbar-row .nav-link.active {
+                color: #111;
+                font-weight: 600;
+                background: rgba(69, 227, 198, 0.12);
+            }
             #userInfo {
                 display: flex;
                 align-items: center;
@@ -34,7 +76,7 @@
                 font-weight: 600;
                 font-size: 14px;
             }
-            .btn-logout {
+            .btn-sm {
                 padding: 6px 14px;
                 border-radius: 8px;
                 font-weight: 600;
@@ -45,9 +87,12 @@
                 color: #666;
                 font-family: "Inter", sans-serif;
             }
-            .btn-logout:hover {
+            .btn-sm:hover {
                 border-color: #45e3c6;
                 color: #3bc4a8;
+            }
+            body {
+                padding-top: 178px;
             }
             .container {
                 max-width: 1100px;
@@ -217,7 +262,7 @@
             }
             .toast {
                 position: fixed;
-                top: 80px;
+                top: 190px;
                 right: 24px;
                 padding: 12px 20px;
                 border-radius: 8px;
@@ -260,50 +305,44 @@
         </style>
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg fixed-top" id="navbar">
-            <div class="container">
-                <a class="navbar-brand" href="/"
+        <div class="logo-bar">
+            <div
+                class="container"
+                style="display: flex; justify-content: center"
+            >
+                <a href="/"
                     ><img
                         src="assets/images/logo.svg"
                         alt="ClassReward"
                         class="logo-img"
                 /></a>
-                <button
-                    class="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav"
-                >
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav mx-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">Trang chủ</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/#features">Tính năng</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="dashboard.html"
-                                >Quản lý lớp học</a
-                            >
-                        </li>
-                    </ul>
-                    <div class="navbar-buttons">
-                        <div id="userInfo">
-                            <div class="user-avatar" id="navAvatar">?</div>
-                            <span class="user-name" id="navName"></span>
-                            <button class="btn-logout" onclick="doLogout()">
-                                Thoát
-                            </button>
-                        </div>
-                    </div>
+            </div>
+        </div>
+        <div class="navbar-row">
+            <div
+                class="container"
+                style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                "
+            >
+                <div style="display: flex; gap: 4px">
+                    <a href="/" class="nav-link">Trang chủ</a>
+                    <a href="/#features" class="nav-link">Tính năng</a>
+                    <a href="dashboard.html" class="nav-link active"
+                        >Quản lý lớp học</a
+                    >
+                </div>
+                <div id="userInfo">
+                    <div class="user-avatar" id="navAvatar">?</div>
+                    <span class="user-name" id="navName"></span>
+                    <button class="btn-sm" onclick="doLogout()">Thoát</button>
                 </div>
             </div>
-        </nav>
+        </div>
 
-        <div class="container" style="padding-top: 120px">
+        <div class="container">
             <div id="loading" style="text-align: center; padding: 80px 0">
                 <div class="spinner"></div>
             </div>
@@ -311,8 +350,8 @@
         </div>
 
         <footer class="app-footer">
-            <span>&copy; 2026 ClassReward. Đã đăng ký bản quyền.</span>
-            <span>Tận tâm vì nhà giáo khắp nơi.</span>
+            <span>&copy; 2026 ClassReward.</span
+            ><span>Tận tâm vì nhà giáo.</span>
         </footer>
 
         <div class="modal-overlay" id="createClassModal">
@@ -325,7 +364,7 @@
                             type="text"
                             id="className"
                             class="form-input"
-                            placeholder="Ví dụ: Toán 8A"
+                            placeholder="Toán 8A"
                             required
                         />
                     </div>
@@ -369,7 +408,7 @@
                     <button
                         type="submit"
                         class="btn btn-accent"
-                        style="width: 100%; padding: 12px; font-size: 15px"
+                        style="width: 100%; padding: 12px"
                     >
                         Tạo lớp
                     </button>
@@ -411,7 +450,7 @@
                     <button
                         type="submit"
                         class="btn btn-accent"
-                        style="width: 100%; padding: 12px; font-size: 15px"
+                        style="width: 100%; padding: 12px"
                     >
                         Tham gia
                     </button>
@@ -427,14 +466,12 @@
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="assets/js/main.js"></script>
         <script>
-            const API = "/api";
-            const token = localStorage.getItem("token");
-            const user = JSON.parse(localStorage.getItem("user") || "{}");
-            const isTeacher = user.role === "TEACHER" || user.role === "ADMIN";
-            (function init() {
+            const API = "/api",
+                token = localStorage.getItem("token"),
+                user = JSON.parse(localStorage.getItem("user") || "{}"),
+                isTeacher = user.role === "TEACHER" || user.role === "ADMIN";
+            !(function () {
                 if (!token) {
                     window.location.href = "login.html";
                     return;
@@ -447,41 +484,39 @@
             })();
             async function loadDashboard() {
                 try {
-                    const res = await fetch(API + "/classes", {
-                        headers: { Authorization: "Bearer " + token },
-                    });
-                    const data = await res.json();
-                    if (!data.success) throw new Error(data.message);
-                    const classes = data.data;
+                    const e = await fetch(API + "/classes", {
+                            headers: { Authorization: "Bearer " + token },
+                        }),
+                        t = await e.json();
+                    if (!t.success) throw new Error();
+                    const a = t.data,
+                        n = a.reduce((e, t) => e + (t._count?.members || 0), 0);
                     document.getElementById("loading").style.display = "none";
-                    const content = document.getElementById("content");
-                    content.style.display = "block";
-                    const totalStudents = classes.reduce(
-                        (s, c) => s + (c._count?.members || 0),
-                        0,
-                    );
-                    let html = `<div class="stats-row"><div class="stat-card"><div class="label">Lớp học</div><div class="value">${classes.length}</div></div><div class="stat-card"><div class="label">Học sinh</div><div class="value">${totalStudents}</div></div><div class="stat-card"><div class="label">Thao tác nhanh</div>${isTeacher ? '<button class="btn btn-accent" style="margin-top:8px;" onclick="openCreateClass()">+ Tạo lớp mới</button>' : '<button class="btn btn-accent" style="margin-top:8px;" onclick="openJoinClass()">+ Tham gia lớp</button>'}</div></div>`;
-                    html += `<div class="section-header"><h2 class="section-title">${isTeacher ? "Lớp của tôi" : "Lớp đã tham gia"}</h2></div>`;
-                    if (classes.length === 0) {
-                        html += `<div class="empty"><p>${isTeacher ? "Bạn chưa có lớp học nào." : "Bạn chưa tham gia lớp nào."}</p>${isTeacher ? '<button class="btn btn-accent" onclick="openCreateClass()">Tạo lớp đầu tiên</button>' : '<button class="btn btn-accent" onclick="openJoinClass()">Tham gia lớp ngay</button>'}</div>`;
-                    } else {
-                        html += '<div class="class-grid">';
-                        for (const c of classes)
-                            html += `<a href="class.html?id=${c.id}" class="class-card"><div class="class-name">${esc(c.className)}</div><div class="class-meta"><span>${c.schoolYear || "—"} · HK${c.semester || "—"}</span><span>${c._count?.members || 0} học sinh</span></div><div class="class-code">Mã: ${esc(c.joinCode)}</div></a>`;
-                        html += "</div>";
+                    let s = document.getElementById("content");
+                    s.style.display = "block";
+                    let o = `<div class="stats-row"><div class="stat-card"><div class="label">Lớp học</div><div class="value">${a.length}</div></div><div class="stat-card"><div class="label">Học sinh</div><div class="value">${n}</div></div><div class="stat-card"><div class="label">Thao tác nhanh</div>${isTeacher ? '<button class="btn btn-accent" style="margin-top:8px;" onclick="openCreateClass()">+ Tạo lớp mới</button>' : '<button class="btn btn-accent" style="margin-top:8px;" onclick="openJoinClass()">+ Tham gia lớp</button>'}</div></div>`;
+                    o += `<div class="section-header"><h2 class="section-title">${isTeacher ? "Lớp của tôi" : "Lớp đã tham gia"}</h2></div>`;
+                    if (0 === a.length)
+                        o += `<div class="empty"><p>${isTeacher ? "Chưa có lớp nào." : "Chưa tham gia lớp nào."}</p>${isTeacher ? '<button class="btn btn-accent" onclick="openCreateClass()">Tạo lớp đầu tiên</button>' : '<button class="btn btn-accent" onclick="openJoinClass()">Tham gia ngay</button>'}</div>`;
+                    else {
+                        o += '<div class="class-grid">';
+                        for (const e of a)
+                            o += `<a href="class.html?id=${e.id}" class="class-card"><div class="class-name">${esc(e.className)}</div><div class="class-meta"><span>${e.schoolYear || "—"} · HK${e.semester || "—"}</span><span>${e._count?.members || 0} học sinh</span></div><div class="class-code">Mã: ${esc(e.joinCode)}</div></a>`;
+                        o += "</div>";
                     }
-                    content.innerHTML = html;
+                    s.innerHTML = o;
                 } catch (e) {
-                    document.getElementById("loading").style.display = "none";
-                    document.getElementById("content").style.display = "block";
-                    document.getElementById("content").innerHTML =
-                        '<div class="empty"><p>Lỗi tải dữ liệu.</p></div>';
+                    ((document.getElementById("loading").style.display =
+                        "none"),
+                        (document.getElementById("content").style.display =
+                            "block"),
+                        (document.getElementById("content").innerHTML =
+                            '<div class="empty"><p>Lỗi tải dữ liệu.</p></div>'));
                 }
             }
-            function esc(s) {
-                const d = document.createElement("div");
-                d.textContent = s;
-                return d.innerHTML;
+            function esc(e) {
+                const t = document.createElement("div");
+                return ((t.textContent = e), t.innerHTML);
             }
             function openCreateClass() {
                 document
@@ -494,49 +529,51 @@
             function closeModal() {
                 document
                     .querySelectorAll(".modal-overlay")
-                    .forEach((m) => m.classList.remove("show"));
+                    .forEach((e) => e.classList.remove("show"));
             }
             document
                 .getElementById("createClassForm")
                 .addEventListener("submit", async (e) => {
                     e.preventDefault();
                     try {
-                        const res = await fetch(API + "/classes", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                Authorization: "Bearer " + token,
-                            },
-                            body: JSON.stringify({
-                                className: document
-                                    .getElementById("className")
-                                    .value.trim(),
-                                description:
-                                    document.getElementById("classDesc").value,
-                                schoolYear:
-                                    document.getElementById("schoolYear").value,
-                                semester:
-                                    document.getElementById("semester").value ||
-                                    null,
+                        const e = await fetch(API + "/classes", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: "Bearer " + token,
+                                },
+                                body: JSON.stringify({
+                                    className: document
+                                        .getElementById("className")
+                                        .value.trim(),
+                                    description:
+                                        document.getElementById("classDesc")
+                                            .value,
+                                    schoolYear:
+                                        document.getElementById("schoolYear")
+                                            .value,
+                                    semester:
+                                        document.getElementById("semester")
+                                            .value || null,
+                                }),
                             }),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            closeModal();
-                            loadDashboard();
-                            toast("Tạo lớp thành công!", "success");
-                        } else {
-                            document.getElementById("modalError").textContent =
-                                data.message;
-                            document.getElementById(
+                            t = await e.json();
+                        t.success
+                            ? (closeModal(),
+                              loadDashboard(),
+                              toast("Tạo lớp thành công!", "success"))
+                            : ((document.getElementById(
+                                  "modalError",
+                              ).textContent = t.message),
+                              (document.getElementById(
+                                  "modalError",
+                              ).style.display = "block"));
+                    } catch (e) {
+                        ((document.getElementById("modalError").textContent =
+                            "Lỗi kết nối"),
+                            (document.getElementById(
                                 "modalError",
-                            ).style.display = "block";
-                        }
-                    } catch (err) {
-                        document.getElementById("modalError").textContent =
-                            "Lỗi kết nối";
-                        document.getElementById("modalError").style.display =
-                            "block";
+                            ).style.display = "block"));
                     }
                 });
             document
@@ -544,43 +581,44 @@
                 .addEventListener("submit", async (e) => {
                     e.preventDefault();
                     try {
-                        const res = await fetch(API + "/classes/join", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                Authorization: "Bearer " + token,
-                            },
-                            body: JSON.stringify({
-                                joinCode: document
-                                    .getElementById("joinCode")
-                                    .value.trim()
-                                    .toUpperCase(),
+                        const e = await fetch(API + "/classes/join", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: "Bearer " + token,
+                                },
+                                body: JSON.stringify({
+                                    joinCode: document
+                                        .getElementById("joinCode")
+                                        .value.trim()
+                                        .toUpperCase(),
+                                }),
                             }),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            closeModal();
-                            loadDashboard();
-                            toast("Tham gia lớp thành công!", "success");
-                        } else {
-                            document.getElementById("joinError").textContent =
-                                data.message;
-                            document.getElementById("joinError").style.display =
-                                "block";
-                        }
-                    } catch (err) {
-                        document.getElementById("joinError").textContent =
-                            "Lỗi kết nối";
-                        document.getElementById("joinError").style.display =
-                            "block";
+                            t = await e.json();
+                        t.success
+                            ? (closeModal(),
+                              loadDashboard(),
+                              toast("Tham gia thành công!", "success"))
+                            : ((document.getElementById(
+                                  "joinError",
+                              ).textContent = t.message),
+                              (document.getElementById(
+                                  "joinError",
+                              ).style.display = "block"));
+                    } catch (e) {
+                        ((document.getElementById("joinError").textContent =
+                            "Lỗi kết nối"),
+                            (document.getElementById(
+                                "joinError",
+                            ).style.display = "block"));
                     }
                 });
-            function toast(msg, type) {
-                const el = document.createElement("div");
-                el.className = "toast toast-" + type;
-                el.textContent = msg;
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 3000);
+            function toast(e, t) {
+                const a = document.createElement("div");
+                ((a.className = "toast toast-" + t),
+                    (a.textContent = e),
+                    document.body.appendChild(a),
+                    setTimeout(() => a.remove(), 3e3));
             }
             function doLogout() {
                 localStorage.clear();

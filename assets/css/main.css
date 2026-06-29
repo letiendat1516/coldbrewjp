@@ -146,7 +146,7 @@ h6 {
    NAVBAR
    ===================================================== */
 .navbar {
-    padding: var(--spacing-md) 0;
+    padding: 12px 0;
     transition:
         background-color var(--transition-base),
         box-shadow var(--transition-base);
@@ -1356,7 +1356,7 @@ h6 {
     }
 
     .navbar {
-        padding: var(--spacing-sm) 0;
+        padding: 8px 0;
     }
 
     .navbar-buttons {
@@ -1404,12 +1404,12 @@ h6 {
     .hero-buttons {
         flex-direction: column;
         width: calc(100% + 40px);
-    margin-left: -20px;
+        margin-left: -20px;
     }
 
     .hero-buttons .btn {
         width: calc(100% + 40px);
-    margin-left: -20px;
+        margin-left: -20px;
     }
 
     .pricing-card {
