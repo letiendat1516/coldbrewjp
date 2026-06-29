@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 BigInt.prototype.toJSON = function () { return this.toString(); };
 
 const express = require("express");
@@ -15,7 +14,6 @@ const rankingRoutes = require("./routes/ranking.routes");
 const announcementRoutes = require("./routes/announcement.routes");
 
 const app = express();
-
 app.use(helmet());
 app.use(cors());
 app.use(morgan("dev"));
@@ -40,20 +38,25 @@ app.post("/api/mazii/search", async (req, res) => {
     if (!keyword) return res.status(400).json({ success: false, message: "Keyword required" });
     const r = await fetch("https://mazii.net/api/search/word", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer a1dff8abeb4b03cc4ff96378ef8e01eb",
-        "User-Agent": "Mozilla/5.0",
-        "Referer": "https://mazii.net/",
-        "Origin": "https://mazii.net",
-      },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer a1dff8abeb4b03cc4ff96378ef8e01eb", "User-Agent": "Mozilla/5.0", "Referer": "https://mazii.net/", "Origin": "https://mazii.net" },
       body: JSON.stringify({ dict: "javi", type: "word", query: keyword, limit: 15, page: 1 }),
     });
     const data = await r.json();
     res.json({ success: true, data: data.data || data });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// Google Translate proxy
+app.post("/api/translate", async (req, res) => {
+  try {
+    const { text, sourceLang, targetLang } = req.body;
+    if (!text) return res.status(400).json({ success: false, message: "Text required" });
+    const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + (sourceLang || "ja") + "&tl=" + (targetLang || "vi") + "&dt=t&q=" + encodeURIComponent(text);
+    const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const data = await r.json();
+    const translated = (data[0] || []).map(t => t[0]).join("");
+    res.json({ success: true, data: { translatedText: translated, originalText: text } });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 app.use((err, req, res, next) => {
