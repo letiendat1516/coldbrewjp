@@ -98,11 +98,11 @@ export default function Translate() {
 
   const handleFile = (e) => {
     const file = e.target.files[0];
-      setTimeout(() => { if (ocrFile) document.querySelector('#ocrForm')?.requestSubmit(); }, 100);
-    if (file) {
-      setOcrFile(file);
-      setOcrPreview(URL.createObjectURL(file));
-    }
+    if (!file) return;
+    setOcrFile(file);
+    setOcrPreview(URL.createObjectURL(file));
+    // Auto-submit after state update
+    setTimeout(() => { document.querySelector('#ocrForm')?.requestSubmit(); }, 200);
   };
 
   const words = dictResult?.words || [];
