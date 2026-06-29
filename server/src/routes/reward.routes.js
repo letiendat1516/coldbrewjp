@@ -26,6 +26,11 @@ router.get('/class/:classId', rewardCtrl.getClassRewards);
 router.get('/student/:studentId/class/:classId', rewardCtrl.getStudentRewards);
 
 // DELETE /api/rewards/:id - Delete reward log
+// POST /api/rewards/simple - Simple reward without sticker
+router.post("/simple", authorize("TEACHER", "ADMIN"), [
+  body("classId").notEmpty(), body("studentId").notEmpty(), body("point").isInt(), validate
+], rewardCtrl.giveSimpleReward);
+
 router.delete('/:id', authorize('TEACHER', 'ADMIN'), rewardCtrl.deleteReward);
 
 module.exports = router;

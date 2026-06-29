@@ -229,3 +229,45 @@ exports.deleteReward = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * POST /api/rewards/simple
+ * Give reward/penalty with direct point (no sticker needed)
+ */
+exports.giveSimpleReward = async (req, res, next) => {
+  try {
+    const { classId, studentId, point, note } = req.body;
+
+    const classRoom = await prisma.class.findUnique({ where: { id: BigInt(classId) } });
+    if (!classRoom) return res.status(404).json({ success: false, message: 'Class not found' });
+    if (classRoom.teacherId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const member = await prisma.classMember.findUnique({
+      where: { classId_studentId: { classId: BigInt(classId), studentId: BigInt(studentId) } }
+    });
+    if (!member) return res.status(400).json({ success: false, message: 'Student not in class' });
+
+    // Find or create a generic sticker for this teacher
+    let sticker = await prisma.sticker.findFirst({
+      where: { stickerSet: { teacherId: req.user.id }, name: 'Điểm thủ công', type: point >= 0 ? 'REWARD' : 'PENALTY' }
+    });
+    if (!sticker) {
+      let set = await prisma.stickerSet.findFirst({ where: { teacherId: req.user.id, isDefault: true } });
+      if (!set) {
+        set = await prisma.stickerSet.create({ data: { teacherId: req.user.id, name: 'Default', isDefault: true } });
+      }
+      sticker = await prisma.sticker.create({
+        data: { stickerSetId: set.id, name: 'Điểm thủ công', emoji: point >= 0 ? '⭐' : '⚠️', point: Math.abs(point), type: point >= 0 ? 'REWARD' : 'PENALTY' }
+      });
+    }
+
+    const log = await prisma.rewardLog.create({
+      data: { classId: BigInt(classId), studentId: BigInt(studentId), teacherId: req.user.id, stickerId: sticker.id, note },
+      include: { student: { select: { id: true, fullName: true } }, teacher: { select: { id: true, fullName: true } } }
+    });
+
+    res.status(201).json({ success: true, data: { ...log, point } });
+  } catch (error) { next(error); }
+};
