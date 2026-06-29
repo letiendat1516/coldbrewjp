@@ -6,6 +6,24 @@ import { esc, randColor, timeAgo, showToast } from "../utils";
 
 const API = "/api";
 
+const QUICK_EMOJIS = [
+  { emoji: "🌟", point: 5, label: "Xuất sắc" },
+  { emoji: "⭐", point: 3, label: "Tốt" },
+  { emoji: "👍", point: 1, label: "Được" },
+  { emoji: "💪", point: 2, label: "Cố gắng" },
+  { emoji: "👏", point: 2, label: "Hay" },
+  { emoji: "🎯", point: 4, label: "Chính xác" },
+  { emoji: "🔥", point: 3, label: "Đỉnh" },
+  { emoji: "❤️", point: 1, label: "Tốt" },
+  { emoji: "👎", point: -1, label: "Chưa tốt" },
+  { emoji: "⚠️", point: -2, label: "Nhắc nhở" },
+  { emoji: "😴", point: -1, label: "Buồn ngủ" },
+  { emoji: "📝", point: -2, label: "Thiếu bài" },
+  { emoji: "⏰", point: -1, label: "Đi muộn" },
+  { emoji: "🚫", point: -3, label: "Vi phạm" },
+  { emoji: "💤", point: -1, label: "Lơ là" },
+];
+
 export default function ClassDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -20,8 +38,7 @@ export default function ClassDetail() {
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
-  const [rewardPoint, setRewardPoint] = useState("1");
-  const [rewardNote, setRewardNote] = useState("");
+  const [customPoint, setCustomPoint] = useState("");
   const [giving, setGiving] = useState(false);
   const isTeacher = user?.role === "TEACHER" || user?.role === "ADMIN";
 
@@ -62,13 +79,11 @@ export default function ClassDetail() {
     if (t !== "reward") setSel(null);
   };
 
-  const givePoints = async (type) => {
+  const giveEmoji = async (emoji, point) => {
     if (!sel) {
       showToast("Chọn học sinh trước", "error");
       return;
     }
-    const point = parseInt(rewardPoint) || 1;
-    const finalPoint = type === "REWARD" ? point : -point;
     setGiving(true);
     try {
       const t = localStorage.getItem("token");
@@ -81,15 +96,49 @@ export default function ClassDetail() {
         body: JSON.stringify({
           classId: id,
           studentId: sel.id.toString(),
-          point: finalPoint,
-          note: rewardNote,
+          point,
+          note: emoji,
         }),
       });
       const d = await r.json();
       if (d.success) {
-        showToast(`${type === "REWARD" ? "+" : "-"}${point} → ${sel.fullName}`);
+        showToast(`${emoji} → ${sel.fullName}`);
         load();
-        setRewardNote("");
+      } else showToast(d.message || "Lỗi", "error");
+    } catch (e) {
+      showToast("Lỗi kết nối", "error");
+    }
+    setGiving(false);
+  };
+
+  const giveCustom = async (e) => {
+    e.preventDefault();
+    const p = parseInt(customPoint);
+    if (!p || p === 0) return;
+    if (!sel) {
+      showToast("Chọn học sinh trước", "error");
+      return;
+    }
+    setGiving(true);
+    try {
+      const t = localStorage.getItem("token");
+      const r = await fetch(API + "/rewards/simple", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + t,
+        },
+        body: JSON.stringify({
+          classId: id,
+          studentId: sel.id.toString(),
+          point: p,
+        }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        showToast(`${p > 0 ? "+" : ""}${p} → ${sel.fullName}`);
+        load();
+        setCustomPoint("");
       } else showToast(d.message || "Lỗi", "error");
     } catch (e) {
       showToast("Lỗi kết nối", "error");
@@ -322,7 +371,7 @@ export default function ClassDetail() {
           )}
           {!sel && (
             <p style={{ color: "#666", marginBottom: 16 }}>
-              Chọn học sinh bên dưới để thưởng/phạt điểm.
+              👆 Chọn học sinh bên dưới, sau đó bấm emoji để thưởng/phạt.
             </p>
           )}
 
@@ -369,75 +418,127 @@ export default function ClassDetail() {
             <div
               style={{
                 background: "#fff",
-                borderRadius: 12,
+                borderRadius: 16,
                 border: "1px solid #e8e8e8",
-                padding: 20,
+                padding: 24,
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  gap: 12,
-                  alignItems: "flex-end",
-                  marginBottom: 12,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  marginBottom: 16,
+                  color: "#666",
                 }}
               >
-                <div
-                  className="form-group"
-                  style={{ flex: 1, marginBottom: 0 }}
-                >
-                  <label className="form-label">Số điểm</label>
-                  <input
-                    className="form-input"
-                    type="number"
-                    value={rewardPoint}
-                    onChange={(e) => setRewardPoint(e.target.value)}
-                    min="1"
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 700,
-                      textAlign: "center",
-                    }}
-                  />
-                </div>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => givePoints("REWARD")}
-                  disabled={giving}
-                  style={{
-                    padding: "14px 28px",
-                    fontSize: 16,
-                    fontWeight: 700,
-                    background: "#45e3c6",
-                  }}
-                >
-                  {giving ? "..." : "⭐ + Thưởng"}
-                </button>
-                <button
-                  className="btn"
-                  onClick={() => givePoints("PENALTY")}
-                  disabled={giving}
-                  style={{
-                    padding: "14px 28px",
-                    fontSize: 16,
-                    fontWeight: 700,
-                    background: "#f5576c",
-                    color: "#fff",
-                    borderRadius: 8,
-                  }}
-                >
-                  {giving ? "..." : "⚠️ - Phạt"}
-                </button>
+                Chọn emoji để thưởng/phạt {esc(sel.fullName)}:
               </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Ghi chú (tùy chọn)</label>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 10,
+                  marginBottom: 20,
+                }}
+              >
+                {QUICK_EMOJIS.map((e) => (
+                  <button
+                    key={e.emoji}
+                    onClick={() => giveEmoji(e.emoji, e.point)}
+                    disabled={giving}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 12,
+                      border: `2px solid ${e.point > 0 ? "rgba(69,227,198,0.3)" : "rgba(245,87,108,0.3)"}`,
+                      background: "#fff",
+                      cursor: "pointer",
+                      textAlign: "center",
+                      minWidth: 80,
+                      transition: "all .15s",
+                      fontFamily: "Inter,sans-serif",
+                    }}
+                    onMouseEnter={(t) => {
+                      t.target.style.transform = "translateY(-2px)";
+                      t.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                    }}
+                    onMouseLeave={(t) => {
+                      t.target.style.transform = "";
+                      t.target.style.boxShadow = "";
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 32,
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {e.emoji}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "#666",
+                        display: "block",
+                      }}
+                    >
+                      {e.label}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 800,
+                        color: e.point > 0 ? "#3bc4a8" : "#f5576c",
+                      }}
+                    >
+                      {e.point > 0 ? "+" : ""}
+                      {e.point}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div
+                  style={{ flex: 1, height: 1, background: "#e8e8e8" }}
+                ></div>
+                <span style={{ fontSize: 12, color: "#999" }}>
+                  HOẶC NHẬP ĐIỂM
+                </span>
+                <div
+                  style={{ flex: 1, height: 1, background: "#e8e8e8" }}
+                ></div>
+              </div>
+              <form
+                onSubmit={giveCustom}
+                style={{ display: "flex", gap: 8, marginTop: 12 }}
+              >
                 <input
                   className="form-input"
-                  value={rewardNote}
-                  onChange={(e) => setRewardNote(e.target.value)}
-                  placeholder="VD: Phát biểu xây dựng bài"
+                  type="number"
+                  value={customPoint}
+                  onChange={(e) => setCustomPoint(e.target.value)}
+                  placeholder="Nhập điểm (+/-)"
+                  style={{
+                    flex: 1,
+                    textAlign: "center",
+                    fontSize: 16,
+                    fontWeight: 700,
+                  }}
                 />
-              </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={giving}
+                  style={{
+                    padding: "12px 24px",
+                    fontSize: 15,
+                    fontWeight: 700,
+                  }}
+                >
+                  OK
+                </button>
+              </form>
             </div>
           )}
         </div>
@@ -452,18 +553,18 @@ export default function ClassDetail() {
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {activity.map((l) => {
               const isR = l.sticker?.type === "REWARD";
+              const emoji =
+                l.note?.match(/^[^\s]+/)?.[0] || (isR ? "⭐" : "⚠️");
               return (
                 <div key={l.id} className="activity-item">
-                  <div className="activity-emoji">{isR ? "⭐" : "⚠️"}</div>
+                  <div className="activity-emoji">{emoji}</div>
                   <div className="activity-info">
                     <div className="atitle">
-                      {esc(l.student?.fullName || "—")}{" "}
-                      {isR ? "được thưởng" : "bị phạt"}{" "}
-                      {Math.abs(l.sticker?.point || 0)} điểm
+                      {esc(l.student?.fullName || "—")} {isR ? "+" : ""}
+                      {l.sticker?.point || 0} điểm
                     </div>
                     <div className="atime">
                       {timeAgo(l.createdAt)} · {esc(l.teacher?.fullName || "—")}
-                      {l.note && <> — {esc(l.note)}</>}
                     </div>
                   </div>
                   <div
