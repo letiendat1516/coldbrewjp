@@ -74,8 +74,8 @@ app.post("/api/handwriting", async (req, res) => {
       body: JSON.stringify(req.body)
     });
     const text = await r.text();
-    const json = JSON.parse(text.slice(4)); // Google prepends ")]}'" plus newline
-    const candidates = (json[1] || [])[0] || [];
+    let t = text.trim(); if (t.startsWith(")\"'}\"'")) t = t.slice(4); const json = JSON.parse(t); // Google prepends ")]}'" plus newline
+    const candidates = (json[1] || [])[0]?.[1] || [];
     res.json({ success: true, data: candidates });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
