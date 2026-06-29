@@ -3,60 +3,10 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { classes, rewards, ranking } from "../api";
 import { esc, randColor, timeAgo, showToast } from "../utils";
+import EMOJI_DATA from "../emojiData";
 
 const API = "/api";
-
-const EMOJI_LIST = [
-  "😀",
-  "😂",
-  "🤣",
-  "😍",
-  "🥰",
-  "😘",
-  "😜",
-  "😎",
-  "🤩",
-  "🥳",
-  "😤",
-  "😢",
-  "😭",
-  "😡",
-  "🤬",
-  "👍",
-  "👎",
-  "👏",
-  "🙌",
-  "💪",
-  "🔥",
-  "⭐",
-  "🌟",
-  "✨",
-  "💯",
-  "🎉",
-  "🎊",
-  "🏆",
-  "🥇",
-  "📌",
-  "❤️",
-  "💔",
-  "🎯",
-  "🚀",
-  "💡",
-  "📚",
-  "✏️",
-  "⚠️",
-  "🚫",
-  "❌",
-  "✅",
-  "🟢",
-  "🔴",
-  "🟡",
-  "💩",
-  "👻",
-  "🤖",
-  "🎓",
-  "📝",
-];
+const EMOJI_CATEGORIES = Object.keys(EMOJI_DATA);
 
 export default function ClassDetail() {
   const { id } = useParams();
@@ -78,6 +28,7 @@ export default function ClassDetail() {
   const [allStickerSets, setAllStickerSets] = useState([]);
   const [loadingSets, setLoadingSets] = useState(false);
   const [pickedEmoji, setPickedEmoji] = useState("⭐");
+  const [emojiCat, setEmojiCat] = useState(EMOJI_CATEGORIES[0]);
   const isTeacher = user?.role === "TEACHER" || user?.role === "ADMIN";
 
   useEffect(() => {
@@ -103,12 +54,12 @@ export default function ClassDetail() {
   const loadStickerSets = async () => {
     setLoadingSets(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(API + "/stickers/sets", {
-        headers: { Authorization: "Bearer " + token },
+      const t = localStorage.getItem("token");
+      const r = await fetch(API + "/stickers/sets", {
+        headers: { Authorization: "Bearer " + t },
       });
-      const data = await res.json();
-      if (data.success) setAllStickerSets(data.data);
+      const d = await r.json();
+      if (d.success) setAllStickerSets(d.data);
     } catch (e) {}
     setLoadingSets(false);
   };
@@ -118,27 +69,26 @@ export default function ClassDetail() {
     setShowAddSticker(true);
     loadStickerSets();
   };
-
-  const pickSticker = async (sticker) => {
+  const pickSticker = async (s) => {
     try {
-      const token = localStorage.getItem("token");
-      const assigned = classData.stickerSets?.some(
-        (m) => m.stickerSetId?.toString() === sticker.stickerSetId?.toString(),
+      const t = localStorage.getItem("token");
+      const a = classData.stickerSets?.some(
+        (m) => m.stickerSetId?.toString() === s.stickerSetId?.toString(),
       );
-      if (!assigned)
+      if (!a)
         await fetch(API + "/stickers/assign", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
+            Authorization: "Bearer " + t,
           },
           body: JSON.stringify({
             classId: id,
-            stickerSetId: sticker.stickerSetId?.toString(),
+            stickerSetId: s.stickerSetId?.toString(),
           }),
         });
       setShowAddSticker(false);
-      showToast("Đã thêm: " + sticker.name);
+      showToast("Đã thêm: " + s.name);
       load();
     } catch (e) {
       showToast("Lỗi", "error");
@@ -151,14 +101,14 @@ export default function ClassDetail() {
     const point = parseInt(document.getElementById("nsPoint").value) || 1;
     if (!name) return;
     try {
-      const token = localStorage.getItem("token");
+      const t = localStorage.getItem("token");
       let setId = allStickerSets[0]?.id?.toString();
       if (!setId) {
         const sr = await fetch(API + "/stickers/sets", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
+            Authorization: "Bearer " + t,
           },
           body: JSON.stringify({ name: "Default Stickers", isDefault: true }),
         });
@@ -170,7 +120,7 @@ export default function ClassDetail() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
+          Authorization: "Bearer " + t,
         },
         body: JSON.stringify({
           stickerSetId: setId,
@@ -190,7 +140,7 @@ export default function ClassDetail() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
+            Authorization: "Bearer " + t,
           },
           body: JSON.stringify({ classId: id, stickerSetId: setId }),
         });
@@ -205,8 +155,8 @@ export default function ClassDetail() {
   const loadActivity = async () => {
     setLoadingAct(true);
     try {
-      const data = await rewards.classLogs(id, "limit=30");
-      setActivity(data.data?.logs || []);
+      const d = await rewards.classLogs(id, "limit=30");
+      setActivity(d.data?.logs || []);
     } catch (e) {
       setActivity([]);
     }
@@ -219,14 +169,14 @@ export default function ClassDetail() {
     setTab(t);
     if (t !== "reward") setSel(null);
   };
-  const giveSticker = async (stickerId) => {
+  const giveSticker = async (sid) => {
     if (!sel) {
       showToast("Chọn học sinh trước", "error");
       return;
     }
     try {
-      await rewards.give(id, sel.id.toString(), stickerId);
-      const s = stickers.find((s) => s.id == stickerId);
+      await rewards.give(id, sel.id.toString(), sid);
+      const s = stickers.find((s) => s.id == sid);
       showToast(`${s?.emoji || ""} ${s?.name || ""} → ${sel.fullName}`);
       load();
     } catch (e) {
@@ -239,20 +189,20 @@ export default function ClassDetail() {
     setImporting(true);
     setImportResult(null);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(API + "/classes/" + id + "/import-students", {
+      const t = localStorage.getItem("token");
+      const r = await fetch(API + "/classes/" + id + "/import-students", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
+          Authorization: "Bearer " + t,
         },
         body: JSON.stringify({ text: importText }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setImportResult(data.data);
+      const d = await r.json();
+      if (d.success) {
+        setImportResult(d.data);
         load();
-      } else showToast(data.message || "Lỗi", "error");
+      } else showToast(d.message || "Lỗi", "error");
     } catch (e) {
       showToast("Lỗi kết nối", "error");
     }
@@ -343,7 +293,6 @@ export default function ClassDetail() {
         </button>
       </div>
 
-      {/* TABS CONTENT - same as before, keeping it compact */}
       {tab === "ranking" && (
         <div>
           <div
@@ -719,7 +668,7 @@ export default function ClassDetail() {
                 className="form-input"
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder={`HE170629\tNguyễn\tMinh\tHiếu\nHE180293\tPhạm\tQuang\tTiến`}
+                placeholder="HE170629&#9;Nguyễn&#9;Minh&#9;Hiếu&#10;HE180293&#9;Phạm&#9;Quang&#9;Tiến"
                 rows={10}
                 style={{
                   fontFamily: "monospace",
@@ -763,13 +712,13 @@ export default function ClassDetail() {
         </div>
       )}
 
-      {/* Add Sticker Modal */}
+      {/* Add Sticker Modal with Categorized Emoji Picker */}
       {showAddSticker && (
         <div className="modal-overlay" onClick={() => setShowAddSticker(false)}>
           <div
             className="modal"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: 560 }}
+            style={{ maxWidth: 600 }}
           >
             <h3>
               + Thêm sticker{" "}
@@ -827,7 +776,6 @@ export default function ClassDetail() {
                 </div>
               )}
             </div>
-
             <div
               style={{
                 display: "flex",
@@ -840,7 +788,6 @@ export default function ClassDetail() {
               <span style={{ fontSize: 12, color: "#999" }}>HOẶC TẠO MỚI</span>
               <div style={{ flex: 1, height: 1, background: "#e8e8e8" }}></div>
             </div>
-
             <form onSubmit={createNewSticker}>
               <div className="form-group">
                 <label className="form-label">Tên sticker</label>
@@ -873,26 +820,63 @@ export default function ClassDetail() {
                       {pickedEmoji}
                     </span>
                   </div>
+                  {/* Category tabs */}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 1,
+                      overflowX: "auto",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {EMOJI_CATEGORIES.map((cat) => {
+                      const icon = cat.split(" ")[0];
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setEmojiCat(cat)}
+                          style={{
+                            padding: "4px 6px",
+                            fontSize: 13,
+                            border: "none",
+                            background:
+                              emojiCat === cat
+                                ? "rgba(69,227,198,0.15)"
+                                : "none",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                            fontWeight: emojiCat === cat ? 600 : 400,
+                            color: emojiCat === cat ? "#111" : "#666",
+                          }}
+                        >
+                          {icon}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Emoji grid for selected category */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(10, 1fr)",
-                      gap: 2,
-                      maxHeight: 140,
+                      gridTemplateColumns: "repeat(10,1fr)",
+                      gap: 1,
+                      maxHeight: 180,
                       overflowY: "auto",
                       background: "#fafafa",
                       borderRadius: 8,
-                      padding: 6,
+                      padding: 4,
                     }}
                   >
-                    {EMOJI_LIST.map((e) => (
+                    {(EMOJI_DATA[emojiCat] || []).map((e) => (
                       <button
                         key={e}
                         type="button"
                         onClick={() => setPickedEmoji(e)}
                         style={{
                           fontSize: 20,
-                          padding: 3,
+                          padding: 2,
                           border:
                             pickedEmoji === e
                               ? "2px solid #45e3c6"
@@ -903,6 +887,7 @@ export default function ClassDetail() {
                               : "none",
                           cursor: "pointer",
                           borderRadius: 6,
+                          lineHeight: 1,
                         }}
                       >
                         {e}
