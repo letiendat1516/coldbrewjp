@@ -1,26 +1,165 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+
+const MAZII_TOKEN = "a1dff8abeb4b03cc4ff96378ef8e01eb";
 
 export default function Translate() {
   const [sp] = useSearchParams();
   const [tab, setTab] = useState(sp.get("tab") || "dictionary");
-
-  // Dictionary
   const [keyword, setKeyword] = useState("");
   const [dictResult, setDictResult] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  // Translate
   const [transText, setTransText] = useState("");
   const [transResult, setTransResult] = useState("");
   const [sourceLang, setSourceLang] = useState("ja");
   const [targetLang, setTargetLang] = useState("vi");
-
-  // OCR
   const [ocrFile, setOcrFile] = useState(null);
   const [ocrPreview, setOcrPreview] = useState("");
   const [ocrResult, setOcrResult] = useState("");
   const [ocrTransResult, setOcrTransResult] = useState("");
+
+  // Handwriting
+  const [showHW, setShowHW] = useState(false);
+  const [hwCandidates, setHwCandidates] = useState([]);
+  const [hwStatus, setHwStatus] = useState("");
+  const canvasRef = useRef(null);
+  const strokesRef = useRef([]);
+  const currentRef = useRef({ x: [], y: [], t: [] });
+  const drawingRef = useRef(false);
+  const startTimeRef = useRef(Date.now());
+  const debounceRef = useRef(null);
+
+  const initCanvas = useCallback(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    strokesRef.current = [];
+    currentRef.current = { x: [], y: [], t: [] };
+    startTimeRef.current = Date.now();
+    setHwCandidates([]);
+    setHwStatus("");
+  }, []);
+
+  useEffect(() => {
+    if (showHW) setTimeout(initCanvas, 100);
+  }, [showHW]);
+
+  const getPos = (e) => {
+    const c = canvasRef.current;
+    if (!c) return { x: 0, y: 0 };
+    const rect = c.getBoundingClientRect();
+    const scaleX = c.width / rect.width,
+      scaleY = c.height / rect.height;
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (cx - rect.left) * scaleX, y: (cy - rect.top) * scaleY };
+  };
+
+  const hwStart = (e) => {
+    e.preventDefault();
+    drawingRef.current = true;
+    const p = getPos(e);
+    currentRef.current = {
+      x: [p.x],
+      y: [p.y],
+      t: [Date.now() - startTimeRef.current],
+    };
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+  };
+  const hwMove = (e) => {
+    e.preventDefault();
+    if (!drawingRef.current) return;
+    const p = getPos(e);
+    currentRef.current.x.push(p.x);
+    currentRef.current.y.push(p.y);
+    currentRef.current.t.push(Date.now() - startTimeRef.current);
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) {
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+  };
+  const hwEnd = () => {
+    if (!drawingRef.current) return;
+    drawingRef.current = false;
+    strokesRef.current.push([
+      currentRef.current.x,
+      currentRef.current.y,
+      currentRef.current.t,
+    ]);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(recognizeHW, 500);
+  };
+
+  const clearHW = () => {
+    const c = canvasRef.current;
+    if (c) {
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, c.width, c.height);
+    }
+    strokesRef.current = [];
+    currentRef.current = { x: [], y: [], t: [] };
+    clearTimeout(debounceRef.current);
+    setHwCandidates([]);
+    setHwStatus("");
+  };
+
+  const recognizeHW = async () => {
+    if (strokesRef.current.length === 0) {
+      setHwStatus("Vẽ chữ vào khung");
+      return;
+    }
+    setHwStatus("Đang nhận diện...");
+    try {
+      const body = {
+        apiLevel: "537.36",
+        appVersion: 0.4,
+        device: "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        inputType: 0,
+        options: "enable_pre_space",
+        requests: [
+          {
+            maxCompletions: 0,
+            maxNumResults: 10,
+            preContext: "",
+            writingGuide: { writingAreaHeight: 350, writingAreaWidth: 348 },
+            ink: strokesRef.current,
+          },
+        ],
+      };
+      const r = await fetch("/api/handwriting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (d.success && d.data?.length > 0) {
+        setHwCandidates(d.data);
+        setHwStatus("");
+      } else {
+        setHwStatus("Không nhận diện được");
+        setHwCandidates([]);
+      }
+    } catch (e) {
+      setHwStatus("Lỗi kết nối");
+    }
+  };
+
+  const pickHW = (c) => {
+    setKeyword(c);
+    setShowHW(false);
+  };
 
   const searchDict = async (e) => {
     e.preventDefault();
@@ -40,7 +179,6 @@ export default function Translate() {
     }
     setLoading(false);
   };
-
   const doTranslate = async (e) => {
     e.preventDefault();
     if (!transText.trim()) return;
@@ -63,7 +201,6 @@ export default function Translate() {
     }
     setLoading(false);
   };
-
   const doOCR = async (e) => {
     e.preventDefault();
     if (!ocrFile) return;
@@ -75,7 +212,7 @@ export default function Translate() {
       form.append("image", ocrFile);
       const r = await fetch("https://ocr.mazii.net/ocr/overlay", {
         method: "POST",
-        headers: { Authorization: "a1dff8abeb4b03cc4ff96378ef8e01eb" },
+        headers: { Authorization: MAZII_TOKEN },
         body: form,
       });
       const d = await r.json();
@@ -95,13 +232,11 @@ export default function Translate() {
     }
     setLoading(false);
   };
-
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setOcrFile(file);
     setOcrPreview(URL.createObjectURL(file));
-    // Auto-submit after state update
     setTimeout(() => {
       document.querySelector("#ocrForm")?.requestSubmit();
     }, 200);
@@ -115,7 +250,6 @@ export default function Translate() {
       <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>
         🔤 Dịch
       </h2>
-
       <div className="tabs" style={{ marginBottom: 24 }}>
         <button
           className={`tab ${tab === "dictionary" ? "active" : ""}`}
@@ -153,8 +287,14 @@ export default function Translate() {
               autoFocus
             />
             <button
-            />
-            <a href="https://www.google.com/inputtools/try/" target="_blank" className="btn btn-outline" style={{ padding: "12px 14px", fontSize: 18, textDecoration: "none" }} title="Viết tay">✍️</a>
+              type="button"
+              onClick={() => setShowHW(true)}
+              className="btn btn-outline"
+              style={{ padding: "12px 14px", fontSize: 18 }}
+              title="Viết tay"
+            >
+              ✍️
+            </button>
             <button
               type="submit"
               className="btn btn-primary"
@@ -175,9 +315,7 @@ export default function Translate() {
             {["猫", "勉強", "日本", "ありがとう"].map((w) => (
               <button
                 key={w}
-                onClick={() => {
-                  setKeyword(w);
-                }}
+                onClick={() => setKeyword(w)}
                 style={{
                   padding: "6px 14px",
                   borderRadius: 20,
@@ -299,9 +437,7 @@ export default function Translate() {
                               .map((w, k) => (
                                 <button
                                   key={k}
-                                  onClick={() => {
-                                    setKeyword(w);
-                                  }}
+                                  onClick={() => setKeyword(w)}
                                   style={{
                                     padding: "4px 12px",
                                     borderRadius: 16,
@@ -355,9 +491,7 @@ export default function Translate() {
                           }}
                         >
                           <button
-                            onClick={() => {
-                              setKeyword(item.word);
-                            }}
+                            onClick={() => setKeyword(item.word)}
                             style={{
                               fontSize: 15,
                               fontWeight: 600,
@@ -560,6 +694,97 @@ export default function Translate() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* HANDWRITING MODAL */}
+      {showHW && (
+        <div className="modal-overlay" onClick={() => setShowHW(false)}>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 420 }}
+          >
+            <h3>✍️ Viết tay</h3>
+            <p style={{ fontSize: 13, color: "#999", marginBottom: 12 }}>
+              Vẽ chữ Kanji/Hiragana vào khung
+            </p>
+            <canvas
+              ref={canvasRef}
+              width={348}
+              height={350}
+              onMouseDown={hwStart}
+              onMouseMove={hwMove}
+              onMouseUp={hwEnd}
+              onMouseLeave={hwEnd}
+              onTouchStart={hwStart}
+              onTouchMove={hwMove}
+              onTouchEnd={hwEnd}
+              style={{
+                width: "100%",
+                height: 350,
+                border: "1px solid #e8e8e8",
+                borderRadius: 12,
+                cursor: "crosshair",
+                touchAction: "none",
+                background: "#fff",
+              }}
+            />
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button
+                onClick={recognizeHW}
+                className="btn btn-primary"
+                style={{ flex: 1 }}
+              >
+                🔍 Nhận dạng
+              </button>
+              <button
+                onClick={clearHW}
+                className="btn btn-outline"
+                style={{ flex: 1 }}
+              >
+                Xóa
+              </button>
+            </div>
+            {hwStatus && (
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 13,
+                  color: "#999",
+                  textAlign: "center",
+                }}
+              >
+                {hwStatus}
+              </div>
+            )}
+            {hwCandidates.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>
+                  Kết quả — bấm để tra:
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {hwCandidates.map((c, i) => (
+                    <button
+                      key={i}
+                      onClick={() => pickHW(c)}
+                      style={{
+                        padding: "8px 16px",
+                        borderRadius: 8,
+                        border: "1px solid #45e3c6",
+                        background: i === 0 ? "rgba(69,227,198,0.15)" : "#fff",
+                        cursor: "pointer",
+                        fontSize: 18,
+                        fontFamily: "Inter,sans-serif",
+                      }}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
